@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <!-- 這行 meta 標籤是讓手機版正常顯示比例的關鍵 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工具借出管理系統 - 登入</title>
+    <!-- 引入 Bootstrap 5 (CSS) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 簡單的自訂 CSS 讓登入框置中 */
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container d-flex justify-content-center">
+        <div class="login-card">
+            <h3 class="text-center mb-4">工具借出管理系統</h3>
+            
+            <form id="loginForm">
+                <!-- 選擇使用人 -->
+                <div class="mb-3">
+                    <label for="userSelect" class="form-label">選擇使用人</label>
+                    <select class="form-select" id="userSelect" required>
+                        <option value="" disabled selected>請選擇您的身分...</option>
+                        <option value="總權限(我)">總權限(我)</option>
+                        <option value="管理員小明">管理員小明</option>
+                        <option value="員工小華">員工小華</option>
+                    </select>
+                </div>
+
+                <!-- 輸入密碼 -->
+                <div class="mb-3">
+                    <label for="passwordInput" class="form-label">密碼</label>
+                    <input type="password" class="form-control" id="passwordInput" placeholder="請輸入密碼" required>
+                </div>
+
+                <!-- 登入按鈕 -->
+                <button type="submit" class="btn btn-primary w-100 mt-3">登入系統</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 引入 Bootstrap (JS) 備用 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault(); 
+
+        const selectedUser = document.getElementById('userSelect').value;
+        const password = document.getElementById('passwordInput').value;
+
+        // 使用 fetch 將資料以 POST 方式傳送給後端
+        fetch('./login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: selectedUser, password: password })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                // 如果登入成功，把使用者名稱和權限暫存到瀏覽器裡，方便後續使用
+                localStorage.setItem('currentUser', data.name);
+                localStorage.setItem('currentRole', data.role);
+                
+                alert(`登入成功！歡迎 ${data.name}`);
+                
+                // 跳轉到系統主頁面 (我們下一步要建立的檔案)
+                window.location.href = 'dashboard.html'; 
+            } else {
+                // 如果登入失敗 (例如密碼打錯)
+                alert(`登入失敗：${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('發生錯誤:', error);
+            alert('無法連線到伺服器，請確認後端已經啟動！');
+        });
+    });
+</script>
+</body>
+</html>

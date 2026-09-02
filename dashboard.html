@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系統主頁 - 工具借出記錄</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <!-- 頂部導覽列 -->
+    <nav class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">工具借出記錄</span>
+            <div class="d-flex align-items-center text-white">
+                <span id="userInfo" class="me-3 d-none d-sm-block"></span>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- 手機版顯示的歡迎詞 -->
+        <div class="mb-3 d-block d-sm-none text-muted">
+            <small id="mobileUserInfo"></small>
+        </div>
+
+        <!-- 借出工具區塊 -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">我要借工具</h5>
+                <div class="input-group mb-3">
+                    <input type="text" id="toolNameInput" class="form-control" placeholder="請輸入要借出的工具名稱...">
+                    <button class="btn btn-primary" id="borrowBtn">確認借出</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 記錄列表區塊 -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title d-flex justify-content-between align-items-center">
+                    所有借出歸還記錄
+                    <span id="adminBadge" class="badge bg-danger d-none">管理權限開啟</span>
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mt-3" style="min-width: 500px;">
+                        <thead>
+                            <tr>
+                                <th>工具名稱</th>
+                                <th>借用人</th>
+                                <th>借出時間</th>
+                                <th>狀態</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                            <!-- 資料之後會透過後端 API 載入到這裡 -->
+                            <tr><td colspan="5" class="text-center text-muted">目前尚無資料，或載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentUser = localStorage.getItem('currentUser');
+const currentRole = localStorage.getItem('currentRole');
+
+if (!currentUser) {
+    alert('請先登入！');
+    window.location.href = 'index.html';
+}
+
+let roleName = currentRole === 'user' ? '一般使用者' : (currentRole === 'admin' ? '管理員' : '總權限');
+let welcomeText = `歡迎，${currentUser} (${roleName})`;
+document.getElementById('userInfo').innerText = welcomeText;
+document.getElementById('mobileUserInfo').innerText = welcomeText;
+
+if (currentRole === 'admin' || currentRole === 'superadmin') {
+    document.getElementById('adminBadge').classList.remove('d-none');
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+}
+
+// 載入記錄資料
+function loadRecords() {
+    fetch(`./records?name=${currentUser}&role=${currentRole}`)
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.getElementById('recordsTableBody');
+        tbody.innerHTML = '';
+        if(data.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">目前尚無記錄</td></tr>';
+            return;
+        }
+        
+        data.data.forEach(record => {
+            // 如果狀態是借出中，產生歸還按鈕
+            let actionBtn = record.status === '借出中' ? 
+                `<button class="btn btn-success btn-sm" onclick="returnTool(${record.id})">歸還</button>` : 
+                `<span class="text-muted">無</span>`;
+            
+            let statusBadge = record.status === '借出中' ? 
+                `<span class="badge bg-warning text-dark">借出中</span>` : 
+                `<span class="badge bg-secondary">已歸還</span>`;
+            
+            // 處理歸還時間顯示
+            let timeDisplay = `${record.borrow_time} <br><small class="text-success">${record.return_time ? '還: ' + record.return_time : ''}</small>`;
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td>${record.tool_name}</td>
+                    <td>${record.borrower_name}</td>
+                    <td>${timeDisplay}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actionBtn}</td>
+                </tr>
+            `;
+        });
+    });
+}
+
+// 借出工具事件
+document.getElementById('borrowBtn').addEventListener('click', () => {
+    const toolName = document.getElementById('toolNameInput').value;
+    if(!toolName) return alert('請輸入工具名稱！');
+    
+    fetch('./borrow', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ tool_name: toolName, borrower_name: currentUser })
+    }).then(res => res.json()).then(data => {
+        if(data.success) {
+            document.getElementById('toolNameInput').value = '';
+            loadRecords(); // 重新載入表格
+        }
+    });
+});
+
+// 歸還工具事件
+function returnTool(id) {
+    if(!confirm('確定要歸還這項工具嗎？')) return;
+    fetch('./return', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id: id })
+    }).then(res => res.json()).then(data => {
+        if(data.success) loadRecords(); // 重新載入表格
+    });
+}
+
+// 網頁載入時自動執行一次
+loadRecords();
+    </script>
+</body>
+</html>
