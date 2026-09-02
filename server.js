@@ -68,6 +68,41 @@ app.post('/login', (req, res) => {
 });
 // ------------------------------------
 
+// --- 新增的部分：處理註冊請求的 API ---
+app.post('/register', (req, res) => {
+    const { name, password } = req.body;
+    const role = 'user'; // 為了安全，新註冊的人員一律預設為「一般使用者」
+
+    if (!name || !password) {
+        return res.json({ success: false, message: '名稱與密碼不能為空！' });
+    }
+
+    // 將新資料存入資料庫
+    const insert = db.prepare("INSERT INTO Users (name, password, role) VALUES (?, ?, ?)");
+    insert.run([name, password, role], function(err) {
+        if (err) {
+            // 因為我們資料庫設定 name 是 UNIQUE (唯一)，如果名稱重複會報錯
+            if (err.message.includes('UNIQUE')) {
+                return res.json({ success: false, message: '這個名稱已經被註冊過囉，請換一個！' });
+            }
+            return res.status(500).json({ success: false, message: '資料庫發生錯誤' });
+        }
+        res.json({ success: true, message: '註冊成功！請使用新帳號登入。' });
+    });
+    insert.finalize();
+});
+// ------------------------------------
+// --- 新增的部分：取得所有使用者名稱 (供登入下拉選單使用) ---
+app.get('/users', (req, res) => {
+    // 從資料庫中只抓取 name 欄位
+    db.all("SELECT name FROM Users", [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ success: false, message: '讀取名單失敗' });
+        }
+        res.json({ success: true, data: rows });
+    });
+});
+// --------------------------------------------------------
 // 1. 讀取記錄 API (根據權限過濾資料)
 app.get('/records', (req, res) => {
     const { name, role } = req.query;
@@ -110,6 +145,47 @@ app.post('/return', (req, res) => {
     });
 });
 
+// ==========================================
+//          管理員專屬 API 區塊
+// ==========================================
+
+// 1. 取得完整人員清單 (包含 ID 與權限)
+app.get('/admin/users', (req, res) => {
+    db.all("SELECT id, name, role FROM Users ORDER BY id DESC", [], (err, rows) => {
+        if (err) return res.status(500).json({ success: false, message: '讀取失敗' });
+        res.json({ success: true, data: rows });
+    });
+});
+
+// 2. 編輯人員 (修改名稱與權限)
+app.post('/admin/edit-user', (req, res) => {
+    const { id, name, role } = req.body;
+    db.run("UPDATE Users SET name = ?, role = ? WHERE id = ?", [name, role, id], function(err) {
+        if (err) {
+            if (err.message.includes('UNIQUE')) return res.json({ success: false, message: '此名稱已有人使用！' });
+            return res.status(500).json({ success: false, message: '更新失敗' });
+        }
+        res.json({ success: true, message: '資料已更新' });
+    });
+});
+
+// 3. 重設密碼
+app.post('/admin/reset-password', (req, res) => {
+    const { id, newPassword } = req.body;
+    db.run("UPDATE Users SET password = ? WHERE id = ?", [newPassword, id], function(err) {
+        if (err) return res.status(500).json({ success: false, message: '密碼重設失敗' });
+        res.json({ success: true, message: `密碼已成功重設為：${newPassword}` });
+    });
+});
+
+// 4. 刪除帳號
+app.post('/admin/delete-user', (req, res) => {
+    const { id } = req.body;
+    db.run("DELETE FROM Users WHERE id = ?", [id], function(err) {
+        if (err) return res.status(500).json({ success: false, message: '刪除失敗' });
+        res.json({ success: true, message: '帳號已刪除' });
+    });
+});
 app.listen(port, () => {
     console.log(`伺服器已經順利啟動！網址是 http://localhost:${port}`);
 });

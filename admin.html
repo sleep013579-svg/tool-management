@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人員管理後台 - 工具借出記錄</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- 導覽列 -->
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">人員權限管理後台</span>
+            <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'">返回主畫面</button>
+        </div>
+    </nav>
+
+    <!-- 名單表格 -->
+    <div class="container">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-hover align-middle text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>名稱</th>
+                            <th>權限角色</th>
+                            <th>管理操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <!-- 資料將由 JS 自動載入 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 權限防護機制 ---
+        const currentRole = localStorage.getItem('currentRole');
+        if (currentRole !== 'admin' && currentRole !== 'super_admin') {
+            alert('系統阻擋：您沒有權限進入此頁面！');
+            window.location.href = 'dashboard.html';
+        }
+
+        // --- 2. 載入人員名單 ---
+        function loadUsers() {
+            fetch('./admin/users')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const tbody = document.getElementById('userTableBody');
+                        tbody.innerHTML = '';
+                        data.data.forEach(user => {
+                            let roleName = user.role === 'super_admin' ? '總權限' : (user.role === 'admin' ? '管理員' : '一般使用者');
+                            tbody.innerHTML += `
+                                <tr>
+                                    <td>${user.id}</td>
+                                    <td>${user.name}</td>
+                                    <td><span class="badge bg-secondary">${roleName}</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary me-1" onclick="editUser(${user.id}, '${user.name}', '${user.role}')">編輯</button>
+                                        <button class="btn btn-sm btn-warning me-1" onclick="resetPwd(${user.id})">重設密碼</button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">刪除</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+                });
+        }
+
+        // --- 3. 編輯人員 ---
+        function editUser(id, oldName, oldRole) {
+            const newName = prompt('請輸入新的名稱：', oldName);
+            if (!newName) return; // 按取消則中斷
+            const newRole = prompt('請輸入新權限 (填入 user, admin, 或 super_admin)：', oldRole);
+            if (!newRole) return;
+
+            fetch('./admin/edit-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, name: newName, role: newRole })
+            }).then(res => res.json()).then(data => {
+                alert(data.message);
+                loadUsers(); // 刷新表格
+            });
+        }
+
+        // --- 4. 重設密碼 ---
+        function resetPwd(id) {
+            const newPwd = prompt('請輸入要重設的新密碼：', '1234');
+            if (!newPwd) return;
+
+            fetch('./admin/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, newPassword: newPwd })
+            }).then(res => res.json()).then(data => {
+                alert(data.message);
+            });
+        }
+
+        // --- 5. 刪除帳號 ---
+        function deleteUser(id) {
+            if (confirm('確定要刪除這位使用者嗎？注意：此動作無法復原！')) {
+                fetch('./admin/delete-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                }).then(res => res.json()).then(data => {
+                    alert(data.message);
+                    loadUsers();
+                });
+            }
+        }
+
+        // 網頁一打開自動執行載入
+        loadUsers();
+    </script>
+</body>
+</html>
