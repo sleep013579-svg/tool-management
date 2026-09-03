@@ -30,15 +30,10 @@
             <h3 class="text-center mb-4">工具借出管理系統</h3>
             
             <form id="loginForm">
-                <!-- 改為手動輸入使用人名稱 -->
-                <!-- 可輸入的下拉式選單 -->
                 <div class="mb-3">
                     <label for="nameInput" class="form-label">選擇或輸入使用者名稱</label>
-                    <!-- list 屬性必須對應到下方 datalist 的 id -->
                     <input class="form-control" list="userOptions" id="nameInput" placeholder="請點擊選擇或輸入名稱搜尋..." required autocomplete="off">
-                    <datalist id="userOptions">
-                        <!-- 這裡的選單內容之後會由腳本自動載入 -->
-                    </datalist>
+                    <datalist id="userOptions"></datalist>
                 </div>
                 <div class="mb-3">
                     <label for="passwordInput" class="form-label">密碼</label>
@@ -47,7 +42,6 @@
                 <button type="submit" class="btn btn-primary w-100 mt-3">登入系統</button>
             </form>
             
-            <!-- 註冊按鈕 (觸發彈跳視窗) -->
             <div class="text-center mt-3">
                 <span class="text-muted">還沒有帳號嗎？</span>
                 <button type="button" class="btn btn-link p-0 align-baseline" data-bs-toggle="modal" data-bs-target="#registerModal">註冊新帳號</button>
@@ -55,7 +49,7 @@
         </div>
     </div>
 
-    <!-- 註冊用的彈跳視窗 (Modal) -->
+    <!-- 註冊 Modal -->
     <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -80,85 +74,124 @@
         </div>
     </div>
 
-    <!-- 必須引入 Bootstrap 的 JS 才能讓彈跳視窗運作 -->
+    <!-- ★ 新增：共用訊息提示 Modal ★ -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="messageModalHeader">
+                    <h5 class="modal-title" id="messageModalTitle">提示</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p id="messageModalBody" class="mb-0 fs-6"></p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">確定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // --- 網頁載入時，自動抓取名單建立下拉選單 ---
-function loadUserList() {
-    fetch('./users')
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) {
-            const datalist = document.getElementById('userOptions');
-            datalist.innerHTML = ''; // 先清空舊選單
+        // --- 核心：共用訊息視窗觸發函數 ---
+        let msgModalInstance;
+        function showMessage(title, message, type = 'primary') {
+            document.getElementById('messageModalTitle').innerText = title;
+            document.getElementById('messageModalBody').innerText = message;
             
-            // 將後端傳來的名字，一筆一筆加入選單中
-            data.data.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.name;
-                datalist.appendChild(option);
-            });
-        }
-    })
-    .catch(() => console.error('無法載入人員名單'));
-}
-
-// 網頁一打開就執行一次
-loadUserList();
-
-// --- 登入功能 ---
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault(); 
-    const name = document.getElementById('nameInput').value;
-    const password = document.getElementById('passwordInput').value;
-
-    fetch('./login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, password: password })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) {
-            localStorage.setItem('currentUser', data.name);
-            localStorage.setItem('currentRole', data.role);
-            window.location.href = 'dashboard.html'; 
-        } else {
-            alert(`登入失敗：${data.message}`);
-        }
-    })
-    .catch(() => alert('無法連線到伺服器！'));
-});
-
-// --- 註冊功能 ---
-document.getElementById('registerForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const regName = document.getElementById('regNameInput').value;
-    const regPassword = document.getElementById('regPasswordInput').value;
-
-    fetch('./register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: regName, password: regPassword })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) {
-            alert(data.message);
-            var myModalEl = document.getElementById('registerModal');
-            var modal = bootstrap.Modal.getInstance(myModalEl);
-            modal.hide();
-            document.getElementById('registerForm').reset();
+            // 根據類型改變標題顏色
+            const header = document.getElementById('messageModalHeader');
+            header.className = `modal-header bg-${type} text-white`;
             
-            // 註冊成功後，立刻重新載入選單，這樣新註冊的人就可以馬上被搜尋到！
-            loadUserList(); 
-        } else {
-            alert(`註冊失敗：${data.message}`);
+            // 如果是淺色背景(如 warning, info)，調整按鈕叉叉的顏色 (非必要，但較美觀)
+            if(type === 'warning' || type === 'light') {
+                header.classList.remove('text-white');
+            }
+
+            if (!msgModalInstance) {
+                msgModalInstance = new bootstrap.Modal(document.getElementById('messageModal'));
+            }
+            msgModalInstance.show();
         }
-    })
-    .catch(() => alert('無法連線到伺服器！'));
-});
+
+        // --- 載入名單 ---
+        function loadUserList() {
+            fetch('./users')
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    const datalist = document.getElementById('userOptions');
+                    datalist.innerHTML = ''; 
+                    data.data.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.name;
+                        datalist.appendChild(option);
+                    });
+                }
+            })
+            .catch(() => console.error('無法載入人員名單'));
+        }
+
+        loadUserList();
+
+        // --- 登入功能 ---
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            const name = document.getElementById('nameInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            fetch('./login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name, password: password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    localStorage.setItem('currentUser', data.name);
+                    localStorage.setItem('currentRole', data.role);
+                    window.location.href = 'dashboard.html'; 
+                } else {
+                    // 使用精美視窗取代 alert
+                    showMessage('登入失敗', data.message, 'danger');
+                }
+            })
+            .catch(() => showMessage('連線錯誤', '無法連線到伺服器！', 'danger'));
+        });
+
+        // --- 註冊功能 ---
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const regName = document.getElementById('regNameInput').value;
+            const regPassword = document.getElementById('regPasswordInput').value;
+
+            fetch('./register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: regName, password: regPassword })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    var myModalEl = document.getElementById('registerModal');
+                    var modal = bootstrap.Modal.getInstance(myModalEl);
+                    modal.hide();
+                    document.getElementById('registerForm').reset();
+                    
+                    loadUserList(); 
+                    
+                    // 使用精美視窗顯示註冊成功
+                    showMessage('註冊成功', data.message, 'success');
+
+                } else {
+                    // 使用精美視窗顯示註冊失敗
+                    showMessage('註冊失敗', data.message, 'danger');
+                }
+            })
+            .catch(() => showMessage('連線錯誤', '無法連線到伺服器！', 'danger'));
+        });
     </script>
 </body>
 </html>

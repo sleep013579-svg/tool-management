@@ -3,165 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系統主頁 - 工具借出記錄</title>
+    <title>工具借出管理系統 - 主畫面</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-
-    <!-- 頂部導覽列 -->
-    <nav class="navbar navbar-dark bg-dark shadow-sm">
+    <!-- 導覽列 -->
+    <nav class="navbar navbar-dark bg-dark mb-4">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">工具借出記錄</span>
-            <div class="d-flex align-items-center text-white">
-                <span id="userInfo" class="me-3 d-none d-sm-block"></span>
+            <span class="navbar-brand mb-0 h1">工具借出管理系統</span>
+            <div>
+                <span class="text-light me-3" id="userGreeting"></span>
+                <!-- 管理員專屬按鈕 -->
+                <button id="adminBtn" class="btn btn-warning btn-sm me-2 d-none" onclick="window.location.href='admin.html'">⚙️ 管理後台</button>
                 <button class="btn btn-outline-light btn-sm" onclick="logout()">登出</button>
-                <button id="adminBtn" class="btn btn-warning d-none" onclick="window.location.href='admin.html'">⚙️ 管理後台</button>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <!-- 手機版顯示的歡迎詞 -->
-        <div class="mb-3 d-block d-sm-none text-muted">
-            <small id="mobileUserInfo"></small>
-        </div>
+    <div class="container">
+        <div class="row">
+            <!-- 左側區域：借用操作與個人狀態 -->
+            <div class="col-md-5 mb-4">
+                
+                <!-- 借用新工具區塊 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">借用工具</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">請選擇要借出的工具：</label>
+                            <select class="form-select" id="availableToolsSelect">
+                                <option value="" disabled selected>載入中...</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="borrowTool()">確認借出</button>
+                    </div>
+                </div>
 
-        <!-- 借出工具區塊 -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">我要借工具</h5>
-                <div class="input-group mb-3">
-                    <input type="text" id="toolNameInput" class="form-control" placeholder="請輸入要借出的工具名稱...">
-                    <button class="btn btn-primary" id="borrowBtn">確認借出</button>
+                <!-- 個人已借出清單區塊 -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">我借出的工具</h5>
+                    </div>
+                    <!-- 這裡會動態載入該使用者借出的工具，並附上歸還按鈕 -->
+                    <ul class="list-group list-group-flush" id="myBorrowedList"></ul>
                 </div>
             </div>
-        </div>
 
-        <!-- 記錄列表區塊 -->
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title d-flex justify-content-between align-items-center">
-                    所有借出歸還記錄
-                    <span id="adminBadge" class="badge bg-danger d-none">管理權限開啟</span>
-                </h5>
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mt-3" style="min-width: 500px;">
-                        <thead>
-                            <tr>
-                                <th>工具名稱</th>
-                                <th>借用人</th>
-                                <th>借出時間</th>
-                                <th>狀態</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recordsTableBody">
-                            <!-- 資料之後會透過後端 API 載入到這裡 -->
-                            <tr><td colspan="5" class="text-center text-muted">目前尚無資料，或載入中...</td></tr>
-                        </tbody>
-                    </table>
+            <!-- 右側區域：全站工具狀態 -->
+            <div class="col-md-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="card-title mb-0">全站工具即時狀態</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover align-middle text-center mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>工具名稱</th>
+                                    <th>狀態</th>
+                                    <th>借出人</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allToolsTableBody">
+                                <!-- JS 動態載入 -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // --- 顯示管理員專屬按鈕 ---
-const userRole = localStorage.getItem('currentRole');
-if (userRole === 'admin' || userRole === 'super_admin') {
-    document.getElementById('adminBtn').classList.remove('d-none');
-}
-        const currentUser = localStorage.getItem('currentUser');
-const currentRole = localStorage.getItem('currentRole');
+    <!-- ★ 共用訊息提示 Modal ★ -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="messageModalHeader">
+                    <h5 class="modal-title" id="messageModalTitle">提示</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p id="messageModalBody" class="mb-0 fs-6"></p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">確定</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-if (!currentUser) {
-    alert('請先登入！');
-    window.location.href = 'index.html';
-}
-
-let roleName = currentRole === 'user' ? '一般使用者' : (currentRole === 'admin' ? '管理員' : '總權限');
-let welcomeText = `歡迎，${currentUser} (${roleName})`;
-document.getElementById('userInfo').innerText = welcomeText;
-document.getElementById('mobileUserInfo').innerText = welcomeText;
-
-if (currentRole === 'admin' || currentRole === 'superadmin') {
-    document.getElementById('adminBadge').classList.remove('d-none');
-}
-
-function logout() {
-    localStorage.clear();
-    window.location.href = 'index.html';
-}
-
-// 載入記錄資料
-function loadRecords() {
-    fetch(`./records?name=${currentUser}&role=${currentRole}`)
-    .then(res => res.json())
-    .then(data => {
-        const tbody = document.getElementById('recordsTableBody');
-        tbody.innerHTML = '';
-        if(data.data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">目前尚無記錄</td></tr>';
-            return;
-        }
-        
-        data.data.forEach(record => {
-            // 如果狀態是借出中，產生歸還按鈕
-            let actionBtn = record.status === '借出中' ? 
-                `<button class="btn btn-success btn-sm" onclick="returnTool(${record.id})">歸還</button>` : 
-                `<span class="text-muted">無</span>`;
-            
-            let statusBadge = record.status === '借出中' ? 
-                `<span class="badge bg-warning text-dark">借出中</span>` : 
-                `<span class="badge bg-secondary">已歸還</span>`;
-            
-            // 處理歸還時間顯示
-            let timeDisplay = `${record.borrow_time} <br><small class="text-success">${record.return_time ? '還: ' + record.return_time : ''}</small>`;
-            
-            tbody.innerHTML += `
-                <tr>
-                    <td>${record.tool_name}</td>
-                    <td>${record.borrower_name}</td>
-                    <td>${timeDisplay}</td>
-                    <td>${statusBadge}</td>
-                    <td>${actionBtn}</td>
-                </tr>
-            `;
-        });
-    });
-}
-
-// 借出工具事件
-document.getElementById('borrowBtn').addEventListener('click', () => {
-    const toolName = document.getElementById('toolNameInput').value;
-    if(!toolName) return alert('請輸入工具名稱！');
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    fetch('./borrow', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ tool_name: toolName, borrower_name: currentUser })
-    }).then(res => res.json()).then(data => {
-        if(data.success) {
-            document.getElementById('toolNameInput').value = '';
-            loadRecords(); // 重新載入表格
+    <script>
+        // --- 身分驗證與導覽列顯示 ---
+        const currentUser = localStorage.getItem('currentUser');
+        const currentRole = localStorage.getItem('currentRole');
+        
+        if (!currentUser) {
+            alert('系統阻擋：請先登入！');
+            window.location.href = 'index.html';
         }
-    });
-});
 
-// 歸還工具事件
-function returnTool(id) {
-    if(!confirm('確定要歸還這項工具嗎？')) return;
-    fetch('./return', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ id: id })
-    }).then(res => res.json()).then(data => {
-        if(data.success) loadRecords(); // 重新載入表格
-    });
-}
+        document.getElementById('userGreeting').innerText = `哈囉，${currentUser}`;
+        if (currentRole === 'admin' || currentRole === 'super_admin') {
+            document.getElementById('adminBtn').classList.remove('d-none');
+        }
 
-// 網頁載入時自動執行一次
-loadRecords();
+        function logout() {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('currentRole');
+            window.location.href = 'index.html';
+        }
+
+        // --- 共用訊息 Modal ---
+        let msgModalInstance;
+        function showMessage(title, message, type = 'success') {
+            document.getElementById('messageModalTitle').innerText = title;
+            document.getElementById('messageModalBody').innerText = message;
+            const header = document.getElementById('messageModalHeader');
+            header.className = `modal-header bg-${type} text-white`;
+            if(type === 'warning' || type === 'light') header.classList.remove('text-white');
+            if (!msgModalInstance) msgModalInstance = new bootstrap.Modal(document.getElementById('messageModal'));
+            msgModalInstance.show();
+        }
+
+        // --- 載入工具資料並渲染畫面 ---
+        function loadDashboard() {
+            fetch('./tools')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        renderAvailableSelect(data.data);
+                        renderMyList(data.data);
+                        renderAllToolsTable(data.data);
+                    }
+                });
+        }
+
+        // 1. 渲染下拉選單 (只顯示狀態為 available 的工具)
+        function renderAvailableSelect(tools) {
+            const select = document.getElementById('availableToolsSelect');
+            select.innerHTML = '<option value="" disabled selected>請選擇工具...</option>';
+            let hasAvailable = false;
+            
+            tools.forEach(tool => {
+                if (tool.status === 'available') {
+                    hasAvailable = true;
+                    select.innerHTML += `<option value="${tool.id}">${tool.name}</option>`;
+                }
+            });
+
+            if (!hasAvailable) {
+                select.innerHTML = '<option value="" disabled selected>目前沒有可借用的工具</option>';
+            }
+        }
+
+        // 2. 渲染個人借出清單 (找出借出人是自己的工具)
+        function renderMyList(tools) {
+            const list = document.getElementById('myBorrowedList');
+            list.innerHTML = '';
+            let hasMyTools = false;
+
+            tools.forEach(tool => {
+                if (tool.status === 'borrowed' && tool.borrower === currentUser) {
+                    hasMyTools = true;
+                    list.innerHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${tool.name}
+                            <button class="btn btn-sm btn-outline-success" onclick="returnTool(${tool.id})">歸還</button>
+                        </li>
+                    `;
+                }
+            });
+
+            if (!hasMyTools) {
+                list.innerHTML = '<li class="list-group-item text-muted text-center p-3">您目前沒有借出任何工具</li>';
+            }
+        }
+
+        // 3. 渲染全站狀態表格
+        function renderAllToolsTable(tools) {
+            const tbody = document.getElementById('allToolsTableBody');
+            tbody.innerHTML = '';
+            
+            tools.forEach(tool => {
+                let statusBadge = tool.status === 'available' ? 
+                    '<span class="badge bg-success">可借用</span>' : 
+                    '<span class="badge bg-secondary">已借出</span>';
+                let borrowerText = tool.status === 'borrowed' ? tool.borrower : '-';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${tool.id}</td>
+                        <td>${tool.name}</td>
+                        <td>${statusBadge}</td>
+                        <td>${borrowerText}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- 借出工具功能 ---
+        function borrowTool() {
+            const select = document.getElementById('availableToolsSelect');
+            const toolId = select.value;
+
+            if (!toolId) return showMessage('請注意', '請先從下拉選單選擇一項工具！', 'warning');
+
+            fetch('./borrow', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ toolId: toolId, userName: currentUser })
+            }).then(res => res.json()).then(data => {
+                // 🕵️‍♂️ 偵探功能：在瀏覽器後台印出真正的資料，方便我們找問題
+                console.log("借出API回傳資料：", data); 
+
+                if (data.success) {
+                    // 🛡️ 防禦性寫法：如果 data.message 是 undefined，就顯示預設文字
+                    const msg = data.message || '借出成功！'; 
+                    showMessage('借出成功', msg, 'success');
+                    loadDashboard(); 
+                } else {
+                    const msg = data.message || '借出失敗，請稍後再試。';
+                    showMessage('借出失敗', msg, 'danger');
+                }
+            }).catch(err => {
+                console.error("發生錯誤：", err);
+                showMessage('錯誤', '連線異常', 'danger');
+            });
+        }
+
+        // --- 歸還工具功能 ---
+        function returnTool(toolId) {
+            fetch('./return', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ toolId: toolId, userName: currentUser })
+            }).then(res => res.json()).then(data => {
+                // 🕵️‍♂️ 偵探功能：在瀏覽器後台印出真正的資料
+                console.log("歸還API回傳資料：", data);
+
+                if (data.success) {
+                    // 🛡️ 防禦性寫法
+                    const msg = data.message || '歸還成功！';
+                    showMessage('歸還成功', msg, 'success');
+                    loadDashboard(); 
+                } else {
+                    const msg = data.message || '歸還失敗，請稍後再試。';
+                    showMessage('歸還失敗', msg, 'danger');
+                }
+            }).catch(err => {
+                console.error("發生錯誤：", err);
+                showMessage('錯誤', '連線異常', 'danger');
+            });
+        }
+
+        // 啟動時載入資料
+        loadDashboard();
     </script>
 </body>
 </html>
