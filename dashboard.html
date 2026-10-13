@@ -13,7 +13,6 @@
             <span class="navbar-brand mb-0 h1">工具借出管理系統</span>
             <div>
                 <span class="text-light me-3" id="userGreeting"></span>
-                <!-- 管理員專屬按鈕 -->
                 <button id="adminBtn" class="btn btn-warning btn-sm me-2 d-none" onclick="window.location.href='admin.html'">⚙️ 管理後台</button>
                 <button class="btn btn-outline-light btn-sm" onclick="logout()">登出</button>
             </div>
@@ -25,28 +24,29 @@
             <!-- 左側區域：借用操作與個人狀態 -->
             <div class="col-md-5 mb-4">
                 
-                <!-- 借用新工具區塊 -->
+                <!-- 借用新工具區塊 (升級為搜尋輸入框) -->
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">借用工具</h5>
+                        <h5 class="card-title mb-0">申請借用工具</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label">請選擇要借出的工具：</label>
-                            <select class="form-select" id="availableToolsSelect">
-                                <option value="" disabled selected>載入中...</option>
-                            </select>
+                            <label class="form-label">請搜尋或選擇要借出的工具：</label>
+                            <!-- 改用 datalist 實現可搜尋的下拉選單 -->
+                            <input class="form-control" list="toolsDatalist" id="toolSearchInput" placeholder="點此輸入工具名稱..." autocomplete="off">
+                            <datalist id="toolsDatalist">
+                                <!-- JS 動態載入 -->
+                            </datalist>
                         </div>
-                        <button class="btn btn-primary w-100" onclick="borrowTool()">確認借出</button>
+                        <button class="btn btn-primary w-100" onclick="borrowTool()">送出借用申請</button>
                     </div>
                 </div>
 
                 <!-- 個人已借出清單區塊 -->
                 <div class="card shadow-sm">
                     <div class="card-header bg-success text-white">
-                        <h5 class="card-title mb-0">我借出的工具</h5>
+                        <h5 class="card-title mb-0">我的工具與申請狀態</h5>
                     </div>
-                    <!-- 這裡會動態載入該使用者借出的工具，並附上歸還按鈕 -->
                     <ul class="list-group list-group-flush" id="myBorrowedList"></ul>
                 </div>
             </div>
@@ -77,7 +77,7 @@
         </div>
     </div>
 
-    <!-- ★ 共用訊息提示 Modal ★ -->
+    <!-- 共用訊息提示 Modal -->
     <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content">
@@ -98,7 +98,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // --- 身分驗證與導覽列顯示 ---
+        // --- 身分驗證 ---
         const currentUser = localStorage.getItem('currentUser');
         const currentRole = localStorage.getItem('currentRole');
         
@@ -130,57 +130,65 @@
             msgModalInstance.show();
         }
 
+        // 建立一個字典來記錄 名稱對應的ID，方便搜尋後轉換
+        let availableToolsMap = {}; 
+
         // --- 載入工具資料並渲染畫面 ---
         function loadDashboard() {
             fetch('./tools')
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        renderAvailableSelect(data.data);
+                        renderAvailableSearch(data.data);
                         renderMyList(data.data);
                         renderAllToolsTable(data.data);
                     }
                 });
         }
 
-        // 1. 渲染下拉選單 (只顯示狀態為 available 的工具)
-        function renderAvailableSelect(tools) {
-            const select = document.getElementById('availableToolsSelect');
-            select.innerHTML = '<option value="" disabled selected>請選擇工具...</option>';
-            let hasAvailable = false;
+        // 1. 渲染可搜尋輸入框
+        function renderAvailableSearch(tools) {
+            const datalist = document.getElementById('toolsDatalist');
+            datalist.innerHTML = '';
+            availableToolsMap = {}; // 清空字典
             
             tools.forEach(tool => {
                 if (tool.status === 'available') {
-                    hasAvailable = true;
-                    select.innerHTML += `<option value="${tool.id}">${tool.name}</option>`;
+                    availableToolsMap[tool.name] = tool.id; // 記錄 ID
+                    datalist.innerHTML += `<option value="${tool.name}">`;
                 }
             });
-
-            if (!hasAvailable) {
-                select.innerHTML = '<option value="" disabled selected>目前沒有可借用的工具</option>';
-            }
         }
 
-        // 2. 渲染個人借出清單 (找出借出人是自己的工具)
+        // 2. 渲染個人狀態清單
         function renderMyList(tools) {
             const list = document.getElementById('myBorrowedList');
             list.innerHTML = '';
             let hasMyTools = false;
 
             tools.forEach(tool => {
-                if (tool.status === 'borrowed' && tool.borrower === currentUser) {
+                // 如果工具是被我借走的，或者我正在申請歸還中
+                if ((tool.status === 'borrowed' || tool.status === 'pending_return') && tool.borrower === currentUser) {
                     hasMyTools = true;
+                    
+                    let actionHtml = '';
+                    if (tool.status === 'borrowed') {
+                        actionHtml = `<button class="btn btn-sm btn-outline-warning" onclick="returnTool(${tool.id}, '${tool.name}')">申請歸還</button>`;
+                    } else if (tool.status === 'pending_return') {
+                        actionHtml = `<span class="badge bg-info text-dark">歸還審核中</span>`;
+                    }
+
                     list.innerHTML += `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             ${tool.name}
-                            <button class="btn btn-sm btn-outline-success" onclick="returnTool(${tool.id})">歸還</button>
+                            ${actionHtml}
                         </li>
                     `;
                 }
             });
 
             if (!hasMyTools) {
-                list.innerHTML = '<li class="list-group-item text-muted text-center p-3">您目前沒有借出任何工具</li>';
+                list.innerHTML = '<li class="list-group-item text-muted text-center p-3">您目前沒有借出或申請中的工具</li>';
             }
         }
 
@@ -190,10 +198,24 @@
             tbody.innerHTML = '';
             
             tools.forEach(tool => {
-                let statusBadge = tool.status === 'available' ? 
-                    '<span class="badge bg-success">可借用</span>' : 
-                    '<span class="badge bg-secondary">已借出</span>';
-                let borrowerText = tool.status === 'borrowed' ? tool.borrower : '-';
+                // 將四種狀態轉換成對應的 Badge
+                let statusBadge = '';
+                let borrowerText = tool.borrower || '-';
+
+                switch(tool.status) {
+                    case 'available':
+                        statusBadge = '<span class="badge bg-success">可借用</span>';
+                        break;
+                    case 'borrowed':
+                        statusBadge = '<span class="badge bg-secondary">已借出</span>';
+                        break;
+                    case 'pending_borrow':
+                        statusBadge = '<span class="badge bg-warning text-dark">借出審核中</span>';
+                        break;
+                    case 'pending_return':
+                        statusBadge = '<span class="badge bg-info text-dark">歸還審核中</span>';
+                        break;
+                }
                 
                 tbody.innerHTML += `
                     <tr>
@@ -206,58 +228,43 @@
             });
         }
 
-        // --- 借出工具功能 ---
+        // --- 借出申請功能 ---
         function borrowTool() {
-            const select = document.getElementById('availableToolsSelect');
-            const toolId = select.value;
+            const searchInput = document.getElementById('toolSearchInput');
+            const toolName = searchInput.value.trim();
+            const toolId = availableToolsMap[toolName];
 
-            if (!toolId) return showMessage('請注意', '請先從下拉選單選擇一項工具！', 'warning');
+            if (!toolName) return showMessage('請注意', '請輸入或選擇一項工具！', 'warning');
+            if (!toolId) return showMessage('錯誤', '找不到此工具或已被借走，請從選單中挑選！', 'danger');
 
             fetch('./borrow', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ toolId: toolId, userName: currentUser })
+                body: JSON.stringify({ toolId: toolId, toolName: toolName, userName: currentUser })
             }).then(res => res.json()).then(data => {
-                // 🕵️‍♂️ 偵探功能：在瀏覽器後台印出真正的資料，方便我們找問題
-                console.log("借出API回傳資料：", data); 
-
                 if (data.success) {
-                    // 🛡️ 防禦性寫法：如果 data.message 是 undefined，就顯示預設文字
-                    const msg = data.message || '借出成功！'; 
-                    showMessage('借出成功', msg, 'success');
+                    searchInput.value = ''; // 清空輸入框
+                    showMessage('申請成功', data.message, 'success');
                     loadDashboard(); 
                 } else {
-                    const msg = data.message || '借出失敗，請稍後再試。';
-                    showMessage('借出失敗', msg, 'danger');
+                    showMessage('申請失敗', data.message, 'danger');
                 }
-            }).catch(err => {
-                console.error("發生錯誤：", err);
-                showMessage('錯誤', '連線異常', 'danger');
             });
         }
 
-        // --- 歸還工具功能 ---
-        function returnTool(toolId) {
+        // --- 歸還申請功能 ---
+        function returnTool(toolId, toolName) {
             fetch('./return', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ toolId: toolId, userName: currentUser })
+                body: JSON.stringify({ toolId: toolId, toolName: toolName, userName: currentUser })
             }).then(res => res.json()).then(data => {
-                // 🕵️‍♂️ 偵探功能：在瀏覽器後台印出真正的資料
-                console.log("歸還API回傳資料：", data);
-
                 if (data.success) {
-                    // 🛡️ 防禦性寫法
-                    const msg = data.message || '歸還成功！';
-                    showMessage('歸還成功', msg, 'success');
+                    showMessage('申請成功', data.message, 'success');
                     loadDashboard(); 
                 } else {
-                    const msg = data.message || '歸還失敗，請稍後再試。';
-                    showMessage('歸還失敗', msg, 'danger');
+                    showMessage('申請失敗', data.message, 'danger');
                 }
-            }).catch(err => {
-                console.error("發生錯誤：", err);
-                showMessage('錯誤', '連線異常', 'danger');
             });
         }
 

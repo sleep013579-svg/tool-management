@@ -41,14 +41,19 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
     borrower TEXT DEFAULT ''
 )`);
 
-            db.run(`CREATE TABLE IF NOT EXISTS Records (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                tool_name TEXT,
-                borrower_name TEXT,
-                borrow_time TEXT,
-                return_time TEXT,
-                status TEXT
-            )`);
+
+            // 3. Records 歷史紀錄與審核資料表 (新增)
+db.run(`CREATE TABLE IF NOT EXISTS Records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tool_id INTEGER,
+    tool_name TEXT,
+    user_name TEXT,
+    action TEXT,             -- 動作：'借出' 或 '歸還'
+    status TEXT DEFAULT '待審核', -- 狀態：'待審核', '已核准', '已拒絕'
+    request_time TEXT,       -- 申請時間
+    approver TEXT DEFAULT '-', -- 審核人
+    approve_time TEXT DEFAULT '-' -- 審核時間
+)`);
 
             db.get("SELECT COUNT(*) AS count FROM Users", (err, row) => {
                 if (row.count === 0) {
@@ -59,6 +64,23 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
                     insert.finalize();
                 }
             });
+        });
+    }
+});
+// 1. Users 資料表與自動初始化
+db.run(`CREATE TABLE IF NOT EXISTS Users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE,
+    password TEXT,
+    role TEXT DEFAULT 'user'
+)`, (err) => {
+    if (!err) {
+        // 確保資料表建好後，才檢查並新增總權限帳號
+        db.get("SELECT COUNT(*) AS count FROM Users", (err, row) => {
+            if (row && row.count === 0) {
+                db.run("INSERT INTO Users (name, password, role) VALUES ('admin', 'admin123', 'super_admin')");
+                console.log("🌟 系統偵測到全新資料庫，已自動建立總權限帳號！(admin / admin123)");
+            }
         });
     }
 });
@@ -139,38 +161,127 @@ app.get('/records', (req, res) => {
 });
 
 // ==========================================
-//          一般使用者：借出與歸還 API
+//          工具清單與管理 API
 // ==========================================
 
-// 借出工具
-app.post('/borrow', (req, res) => {
-    const { toolId, userName } = req.body;
-    
-    // 更新 Tools 資料表，將狀態改為 borrowed
-    // 注意：這裡必須用 function(err) 而不是箭頭函數，才能正確讀取 this.changes
-    db.run("UPDATE Tools SET status = 'borrowed', borrower = ? WHERE id = ? AND status = 'available'", 
-    [userName, toolId], function(err) {
-        if (err) return res.status(500).json({ success: false, message: '借出失敗，請稍後再試' });
-        
-        // 如果 this.changes 是 0，代表找不到這項工具或它已經被借走了
-        if (this.changes === 0) return res.json({ success: false, message: '太遲了！這項工具剛剛被別人借走囉。' });
-        
-        res.json({ success: true, message: '借出成功！' }); 
+// 取得所有工具
+app.get('/tools', (req, res) => {
+    db.all("SELECT * FROM Tools ORDER BY status ASC, name ASC", [], (err, rows) => {
+        if (err) return res.status(500).json({ success: false, message: '讀取工具失敗' });
+        res.json({ success: true, data: rows });
     });
 });
 
-// 歸還工具
-app.post('/return', (req, res) => {
-    const { toolId, userName } = req.body;
+// 管理員新增工具
+app.post('/admin/add-tool', (req, res) => {
+    const { name, operatorRole } = req.body;
+    if (operatorRole !== 'admin' && operatorRole !== 'super_admin') return res.status(403).json({ success: false, message: '權限不足' });
     
-    // 更新 Tools 資料表，將狀態改回 available
-    db.run("UPDATE Tools SET status = 'available', borrower = '' WHERE id = ? AND borrower = ?", 
-    [toolId, userName], function(err) {
-        if (err) return res.status(500).json({ success: false, message: '歸還失敗' });
+    db.run("INSERT INTO Tools (name) VALUES (?)", [name], function(err) {
+        if (err) {
+            if (err.message.includes('UNIQUE')) return res.json({ success: false, message: '這個工具名稱已經存在囉！' });
+            return res.status(500).json({ success: false, message: '新增失敗' });
+        }
+        res.json({ success: true, message: '工具新增成功！' });
+    });
+});
+
+// 管理員刪除工具
+app.post('/admin/delete-tool', (req, res) => {
+    const { id, operatorRole } = req.body;
+    if (operatorRole !== 'admin' && operatorRole !== 'super_admin') return res.status(403).json({ success: false, message: '權限不足' });
+    
+    db.run("DELETE FROM Tools WHERE id = ?", [id], function(err) {
+        if (err) return res.status(500).json({ success: false, message: '刪除失敗' });
+        res.json({ success: true, message: '工具已刪除' });
+    });
+});
+
+// ==========================================
+//          工具借還申請與審核 API
+// ==========================================
+
+function getNowTime() {
+    return new Date().toLocaleString('zh-TW', { hour12: false });
+}
+
+// 一般使用者：借出申請
+app.post('/borrow', (req, res) => {
+    const { toolId, toolName, userName } = req.body;
+    const now = getNowTime();
+    
+    db.run("UPDATE Tools SET status = 'pending_borrow' WHERE id = ? AND status = 'available'", [toolId], function(err) {
+        if (err) return res.status(500).json({ success: false, message: '系統錯誤' });
+        if (this.changes === 0) return res.json({ success: false, message: '該工具已被借走或正在審核中！' });
         
-        if (this.changes === 0) return res.json({ success: false, message: '歸還失敗，您可能不是該工具的借出人。' });
+        db.run("INSERT INTO Records (tool_id, tool_name, user_name, action, status, request_time) VALUES (?, ?, ?, '借出', '待審核', ?)", 
+        [toolId, toolName, userName, now], function(err) {
+            if (err) return res.json({ success: false, message: '資料庫寫入失敗' });
+            res.json({ success: true, message: '借出申請已送出，請等待管理員審核！' }); 
+        });
+    });
+});
+
+// 一般使用者：歸還申請
+app.post('/return', (req, res) => {
+    const { toolId, toolName, userName } = req.body;
+    const now = getNowTime();
+    
+    db.run("UPDATE Tools SET status = 'pending_return' WHERE id = ? AND borrower = ?", [toolId, userName], function(err) {
+        if (err) return res.status(500).json({ success: false, message: '系統錯誤' });
+        if (this.changes === 0) return res.json({ success: false, message: '狀態異常，無法申請歸還。' });
         
-        res.json({ success: true, message: '歸還成功！' });
+        db.run("INSERT INTO Records (tool_id, tool_name, user_name, action, status, request_time) VALUES (?, ?, ?, '歸還', '待審核', ?)", 
+        [toolId, toolName, userName, now], function(err) {
+            if (err) return res.json({ success: false, message: '資料庫寫入失敗' });
+            res.json({ success: true, message: '歸還申請已送出，請交給管理員！' });
+        });
+    });
+});
+
+// 管理員：取得待審核清單
+app.get('/admin/pending-requests', (req, res) => {
+    db.all("SELECT * FROM Records WHERE status = '待審核' ORDER BY id ASC", [], (err, rows) => {
+        if (err) return res.status(500).json({ success: false, message: '讀取失敗' });
+        res.json({ success: true, data: rows });
+    });
+});
+
+// 管理員：執行審核
+app.post('/admin/approve', (req, res) => {
+    const { recordId, toolId, action, isApproved, operatorName, operatorRole } = req.body;
+    if (operatorRole !== 'admin' && operatorRole !== 'super_admin') return res.status(403).json({ success: false, message: '權限不足' });
+
+    const now = getNowTime();
+    const finalStatus = isApproved ? '已核准' : '已拒絕';
+
+    db.run("UPDATE Records SET status = ?, approver = ?, approve_time = ? WHERE id = ?", [finalStatus, operatorName, now, recordId], function(err) {
+        if (err) return res.status(500).json({ success: false, message: '審核更新失敗' });
+
+        if (action === '借出') {
+            if (isApproved) {
+                db.get("SELECT user_name FROM Records WHERE id = ?", [recordId], (err, row) => {
+                    db.run("UPDATE Tools SET status = 'borrowed', borrower = ? WHERE id = ?", [row.user_name, toolId]);
+                });
+            } else {
+                db.run("UPDATE Tools SET status = 'available', borrower = '' WHERE id = ?", [toolId]);
+            }
+        } else if (action === '歸還') {
+            if (isApproved) {
+                db.run("UPDATE Tools SET status = 'available', borrower = '' WHERE id = ?", [toolId]);
+            } else {
+                db.run("UPDATE Tools SET status = 'borrowed' WHERE id = ?", [toolId]);
+            }
+        }
+        res.json({ success: true, message: `已成功${finalStatus}！` });
+    });
+});
+
+// 管理員：取得所有紀錄
+app.get('/admin/all-records', (req, res) => {
+    db.all("SELECT * FROM Records ORDER BY id DESC", [], (err, rows) => {
+        if (err) return res.status(500).json({ success: false, message: '讀取失敗' });
+        res.json({ success: true, data: rows });
     });
 });
 
