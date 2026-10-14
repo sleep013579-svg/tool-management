@@ -196,6 +196,21 @@ app.post('/admin/delete-tool', (req, res) => {
         res.json({ success: true, message: '工具已刪除' });
     });
 });
+// 管理員修改工具狀態
+app.post('/admin/edit-tool-status', (req, res) => {
+    const { toolId, newStatus, newBorrower, operatorRole } = req.body;
+    
+    // 檢查權限
+    if (operatorRole !== 'admin' && operatorRole !== 'super_admin') {
+        return res.status(403).json({ success: false, message: '權限不足' });
+    }
+    
+    // 執行更新 (將狀態與借出人一起更新)
+    db.run("UPDATE Tools SET status = ?, borrower = ? WHERE id = ?", [newStatus, newBorrower || '', toolId], function(err) {
+        if (err) return res.status(500).json({ success: false, message: '更新失敗' });
+        res.json({ success: true, message: '工具狀態已成功更新！' });
+    });
+});
 
 // ==========================================
 //          工具借還申請與審核 API
