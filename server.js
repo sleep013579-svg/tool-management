@@ -1,3 +1,51 @@
+// ==========================================
+//          LINE Bot 多人推播與 Webhook 模組
+// ==========================================
+const LINE_CHANNEL_ACCESS_TOKEN = '你的超長Token請貼這';
+
+// 💡 1. 將單一 ID 改成陣列 (把你要通知的所有管理員 ID 都放進來，用逗號隔開)
+const LINE_TARGET_IDS = [
+    'U你的專屬亂碼...', 
+    // 'U第二位管理員的ID...', 
+    // 'U第三位管理員的ID...'
+]; 
+
+// 💡 2. 發送通知函數 (改為迴圈發送給名單上的所有人)
+async function sendLineMessage(message) {
+    if (!LINE_CHANNEL_ACCESS_TOKEN || LINE_TARGET_IDS.length === 0) return;
+    
+    for (let targetId of LINE_TARGET_IDS) {
+        try {
+            await fetch('https://api.line.me/v2/bot/message/push', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
+                },
+                body: JSON.stringify({
+                    to: targetId,
+                    messages: [{ type: 'text', text: message }]
+                })
+            });
+        } catch (error) {
+            console.error(`❌ 發送給 ${targetId} 失敗：`, error);
+        }
+    }
+}
+
+// 💡 3. 新增 Webhook 路由：用來偷偷印出其他人的 ID
+app.post('/webhook', (req, res) => {
+    const events = req.body.events;
+    if (events && events.length > 0) {
+        events.forEach(event => {
+            // 當有人傳訊息給機器人時，在終端機印出他的 ID
+            if (event.type === 'message' && event.message.type === 'text') {
+                console.log(`\n🕵️‍♂️ 抓到新 ID 了！\n傳訊者 ID: ${event.source.userId}\n他說了: ${event.message.text}\n`);
+            }
+        });
+    }
+    res.status(200).send('OK');
+});
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
@@ -220,37 +268,37 @@ function getNowTime() {
     return new Date().toLocaleString('zh-TW', { hour12: false });
 }
 
-// 一般使用者：借出申請
+// 處理借用申請 API
 app.post('/borrow', (req, res) => {
     const { toolId, toolName, userName } = req.body;
-    const now = getNowTime();
-    
-    db.run("UPDATE Tools SET status = 'pending_borrow' WHERE id = ? AND status = 'available'", [toolId], function(err) {
-        if (err) return res.status(500).json({ success: false, message: '系統錯誤' });
-        if (this.changes === 0) return res.json({ success: false, message: '該工具已被借走或正在審核中！' });
+    const now = new Date().toLocaleString();
+
+    // 寫入借用紀錄
+    db.run("INSERT INTO Records (tool_id, tool_name, user_name, action, status, request_time) VALUES (?, ?, ?, '借出', '待審核', ?)", 
+    [toolId, toolName, userName, now], function(err) {
+        if (err) return res.status(500).json({ success: false, message: '資料庫寫入失敗' });
         
-        db.run("INSERT INTO Records (tool_id, tool_name, user_name, action, status, request_time) VALUES (?, ?, ?, '借出', '待審核', ?)", 
-        [toolId, toolName, userName, now], function(err) {
-            if (err) return res.json({ success: false, message: '資料庫寫入失敗' });
-            res.json({ success: true, message: '借出申請已送出，請等待管理員審核！' }); 
-        });
+        // 💡 關鍵：這裡一定要呼叫發送通知的函數！
+        sendLineMessage(`\n🔔【新增借用申請】\n申請人：${userName}\n工具名稱：${toolName}\n請管理員盡速至後台審核！`);
+        
+        res.json({ success: true, message: '借出申請已送出，請等待管理員審核！' });
     });
 });
 
-// 一般使用者：歸還申請
+// 處理歸還申請 API
 app.post('/return', (req, res) => {
     const { toolId, toolName, userName } = req.body;
-    const now = getNowTime();
-    
-    db.run("UPDATE Tools SET status = 'pending_return' WHERE id = ? AND borrower = ?", [toolId, userName], function(err) {
-        if (err) return res.status(500).json({ success: false, message: '系統錯誤' });
-        if (this.changes === 0) return res.json({ success: false, message: '狀態異常，無法申請歸還。' });
+    const now = new Date().toLocaleString();
+
+    // 寫入歸還紀錄
+    db.run("INSERT INTO Records (tool_id, tool_name, user_name, action, status, request_time) VALUES (?, ?, ?, '歸還', '待審核', ?)", 
+    [toolId, toolName, userName, now], function(err) {
+        if (err) return res.status(500).json({ success: false, message: '資料庫寫入失敗' });
         
-        db.run("INSERT INTO Records (tool_id, tool_name, user_name, action, status, request_time) VALUES (?, ?, ?, '歸還', '待審核', ?)", 
-        [toolId, toolName, userName, now], function(err) {
-            if (err) return res.json({ success: false, message: '資料庫寫入失敗' });
-            res.json({ success: true, message: '歸還申請已送出，請交給管理員！' });
-        });
+        // 💡 關鍵：這裡一定要呼叫發送通知的函數！
+        sendLineMessage(`\n✅【新增歸還申請】\n申請人：${userName}\n工具名稱：${toolName}\n請管理員確認工具並至後台審核！`);
+        
+        res.json({ success: true, message: '歸還申請已送出，請交給管理員！' });
     });
 });
 
