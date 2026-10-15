@@ -204,11 +204,11 @@
                         tbody.innerHTML = '';
                         document.getElementById('pendingCount').innerText = data.data.length;
 
-                        data.data.forEach(req => {
+                        data.data.forEach((req, index) => {
                             let actionBadge = req.action === '借出' ? '<span class="badge bg-warning text-dark">借出申請</span>' : '<span class="badge bg-info text-dark">歸還申請</span>';
                             tbody.innerHTML += `
                                 <tr>
-                                    <td>#${req.id}</td>
+                                    <td>${index + 1}</td>
                                     <td class="fw-bold">${req.tool_name}</td>
                                     <td>${req.user_name}</td>
                                     <td>${actionBadge}</td>
@@ -229,12 +229,12 @@
                     if (data.success) {
                         const tbody = document.getElementById('recordTableBody');
                         tbody.innerHTML = '';
-                        data.data.forEach(rec => {
+                        data.data.forEach((rec, index) => {
                             let statusBadge = rec.status === '已核准' ? '<span class="badge bg-success">已核准</span>' : 
                                               (rec.status === '已拒絕' ? '<span class="badge bg-danger">已拒絕</span>' : '<span class="badge bg-secondary">待審核</span>');
                             tbody.innerHTML += `
                                 <tr>
-                                    <td>#${rec.id}</td>
+                                    <td>${index + 1}</td>
                                     <td>${rec.tool_name}</td>
                                     <td>${rec.user_name}</td>
                                     <td>${rec.action}</td>
@@ -266,14 +266,14 @@
                 if (data.success) {
                     const tbody = document.getElementById('toolTableBody');
                     tbody.innerHTML = '';
-                    data.data.forEach(tool => {
+                    data.data.forEach((tool, index) => {
                         let statusText = tool.status === 'available' ? '<span class="badge bg-success">可借出</span>' : 
                                          (tool.status === 'borrowed' ? '<span class="badge bg-secondary">已借出</span>' : 
                                          (tool.status === 'pending_borrow' ? '<span class="badge bg-warning text-dark">借出審核中</span>' : '<span class="badge bg-info text-dark">歸還審核中</span>'));
                         
                         // 替換這行：加入編輯按鈕
                         tbody.innerHTML += `<tr>
-                            <td>${tool.id}</td>
+                            <td>${index + 1}</td>
                             <td>${tool.name}</td>
                             <td>${statusText}</td>
                             <td>${tool.borrower || '-'}</td>
@@ -367,12 +367,12 @@ let editToolStatusModalInstance;
                     tbody.innerHTML = '';
                     if(datalist) datalist.innerHTML = ''; // 清空選項
                     
-                    data.data.forEach(user => {
+                    data.data.forEach((user, index) => {
                         let roleName = user.role === 'super_admin' ? '總權限' : (user.role === 'admin' ? '管理員' : '一般使用者');
                         let editBtnHtml = currentRole === 'super_admin' ? 
                             `<button class="btn btn-sm btn-outline-primary me-1" onclick="openNameModal(${user.id}, '${user.name}', '${user.role}')">改名</button><button class="btn btn-sm btn-outline-info me-1" onclick="openRoleModal(${user.id}, '${user.name}', '${user.role}')">改權限</button>` : 
                             `<button class="btn btn-sm btn-outline-primary me-1" onclick="openNameModal(${user.id}, '${user.name}', '${user.role}')">改名</button>`;
-                        tbody.innerHTML += `<tr><td>${user.id}</td><td>${user.name}</td><td><span class="text-danger">${user.password}</span></td><td><span class="badge bg-secondary">${roleName}</span></td><td>${editBtnHtml}<button class="btn btn-sm btn-warning me-1" onclick="openPwdModal(${user.id})">重設密碼</button><button class="btn btn-sm btn-danger" onclick="openDeleteModal(${user.id}, '${user.name}')">刪除</button></td></tr>`;
+                        tbody.innerHTML += `<tr><td>${index + 1}</td><td>${user.name}</td><td><span class="text-danger">${user.password}</span></td><td><span class="badge bg-secondary">${roleName}</span></td><td>${editBtnHtml}<button class="btn btn-sm btn-warning me-1" onclick="openPwdModal(${user.id})">重設密碼</button><button class="btn btn-sm btn-danger" onclick="openDeleteModal(${user.id}, '${user.name}')">刪除</button></td></tr>`;
                         
                         // 💡 將每一位人員的名稱加入到搜尋選項中
                         if(datalist) datalist.innerHTML += `<option value="${user.name}">`;

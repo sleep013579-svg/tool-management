@@ -270,37 +270,49 @@ function getNowTime() {
     return new Date().toLocaleString('zh-TW', { hour12: false });
 }
 
-// 處理借用申請 API
+// ==========================================
+// 處理借用申請 API (安全鎖定版)
+// ==========================================
 app.post('/borrow', (req, res) => {
     const { toolId, toolName, userName } = req.body;
     const now = new Date().toLocaleString();
 
-    // 寫入借用紀錄
+    // 第一步：寫入借用紀錄
     db.run("INSERT INTO Records (tool_id, tool_name, user_name, action, status, request_time) VALUES (?, ?, ?, '借出', '待審核', ?)", 
     [toolId, toolName, userName, now], function(err) {
         if (err) return res.status(500).json({ success: false, message: '資料庫寫入失敗' });
         
-        // 💡 關鍵：這裡一定要呼叫發送通知的函數！
-        sendLineMessage(`\n🔔【新增借用申請】\n申請人：${userName}\n工具名稱：${toolName}\n請管理員盡速至後台審核！`);
-        
-        res.json({ success: true, message: '借出申請已送出，請等待管理員審核！' });
+        // 🔥 第二步(關鍵)：立刻把這把工具的狀態鎖定為「借出審核中(pending_borrow)」，並暫時登記借用人
+        db.run("UPDATE Tools SET status = 'pending_borrow', borrower = ? WHERE id = ?", [userName, toolId], function(updateErr) {
+            
+            // 第三步：發送 LINE 通知
+            sendLineMessage(`\n🔔【新增借用申請】\n申請人：${userName}\n工具名稱：${toolName}\n請管理員盡速至後台審核！`);
+            
+            res.json({ success: true, message: '借出申請已送出，請等待管理員審核！' });
+        });
     });
 });
 
-// 處理歸還申請 API
+// ==========================================
+// 處理歸還申請 API (安全鎖定版)
+// ==========================================
 app.post('/return', (req, res) => {
     const { toolId, toolName, userName } = req.body;
     const now = new Date().toLocaleString();
 
-    // 寫入歸還紀錄
+    // 第一步：寫入歸還紀錄
     db.run("INSERT INTO Records (tool_id, tool_name, user_name, action, status, request_time) VALUES (?, ?, ?, '歸還', '待審核', ?)", 
     [toolId, toolName, userName, now], function(err) {
         if (err) return res.status(500).json({ success: false, message: '資料庫寫入失敗' });
         
-        // 💡 關鍵：這裡一定要呼叫發送通知的函數！
-        sendLineMessage(`\n✅【新增歸還申請】\n申請人：${userName}\n工具名稱：${toolName}\n請管理員確認工具並至後台審核！`);
-        
-        res.json({ success: true, message: '歸還申請已送出，請交給管理員！' });
+        // 🔥 第二步(關鍵)：立刻把這把工具的狀態鎖定為「歸還審核中(pending_return)」
+        db.run("UPDATE Tools SET status = 'pending_return' WHERE id = ?", [toolId], function(updateErr) {
+            
+            // 第三步：發送 LINE 通知
+            sendLineMessage(`\n✅【新增歸還申請】\n申請人：${userName}\n工具名稱：${toolName}\n請管理員確認工具並至後台審核！`);
+            
+            res.json({ success: true, message: '歸還申請已送出，請交給管理員！' });
+        });
     });
 });
 

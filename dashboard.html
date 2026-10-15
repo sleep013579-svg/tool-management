@@ -239,7 +239,7 @@
             const tbody = document.getElementById('allToolsTableBody');
             tbody.innerHTML = '';
             
-            tools.forEach(tool => {
+            tools.forEach((tool, index) => {
                 let statusBadge = '';
                 switch(tool.status) {
                     case 'available': statusBadge = '<span class="badge bg-success">可借用</span>'; break;
@@ -253,7 +253,7 @@
                 
                 tbody.innerHTML += `
                     <tr>
-                        <td>${tool.id}</td>
+                        <td>${index + 1}</td>
                         <td>${tool.name}</td>
                         <td>${statusBadge}</td>
                         <td>${tool.borrower || '-'}</td>
