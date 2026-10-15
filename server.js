@@ -33,6 +33,12 @@ async function sendLineMessage(message) {
     }
 }
 
+
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const cors = require('cors');
+
+const app = express();
 // 💡 3. 新增 Webhook 路由：用來偷偷印出其他人的 ID
 app.post('/webhook', (req, res) => {
     const events = req.body.events;
@@ -46,11 +52,6 @@ app.post('/webhook', (req, res) => {
     }
     res.status(200).send('OK');
 });
-const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
-const cors = require('cors');
-
-const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static('./')); // 讓伺服器自動讀取當前目錄下的 HTML 檔案
