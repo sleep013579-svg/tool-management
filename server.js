@@ -39,6 +39,7 @@ const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 
 const app = express();
+app.use(express.json());
 // 💡 3. 新增 Webhook 路由：用來偷偷印出其他人的 ID
 app.post('/webhook', (req, res) => {
     const events = req.body.events;
