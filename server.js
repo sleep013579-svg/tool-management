@@ -1,11 +1,11 @@
 // ==========================================
 //          LINE Bot 多人推播與 Webhook 模組
 // ==========================================
-const LINE_CHANNEL_ACCESS_TOKEN = '你的超長Token請貼這';
+const LINE_CHANNEL_ACCESS_TOKEN = 'aVlWREci9FWVcYv1FzsOv73nYD9LlFo0LGXdaGZRP03CRXuFAt2GZmUhjz3PgMGM2APcCNWYY27ZxS44Dy6GJLcPBVQ58KEFKdI5FRC1rrU9bLqZT2BXvzGb9o0L7BQKcrhb7tZFYuOpwoCLLldc9gdB04t89/1O/w1cDnyilFU=';
 
 // 💡 1. 將單一 ID 改成陣列 (把你要通知的所有管理員 ID 都放進來，用逗號隔開)
 const LINE_TARGET_IDS = [
-    'U你的專屬亂碼...', 
+    'U15b897ad9424ecfacca134c08f355bb0', 
     // 'U第二位管理員的ID...', 
     // 'U第三位管理員的ID...'
 ]; 
