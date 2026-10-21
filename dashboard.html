@@ -120,7 +120,25 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+    <!-- 💡 新增：確認借用專用 Modal -->
+    <div class="modal fade" id="confirmBorrowModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">確認借用</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <p class="mb-2 fs-5">您要申請借用</p>
+                    <h4 id="confirmBorrowToolName" class="text-primary fw-bold mb-0"></h4>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary w-25" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary w-50" id="confirmBorrowBtn" onclick="executeBorrow()">確認送出</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         // --- 身分驗證 ---
         const currentUser = localStorage.getItem('currentUser');
@@ -241,8 +259,14 @@
             
             tools.forEach((tool, index) => {
                 let statusBadge = '';
+                let nameDisplay = tool.name; // 預設只顯示文字
+
                 switch(tool.status) {
-                    case 'available': statusBadge = '<span class="badge bg-success">可借用</span>'; break;
+                    case 'available': 
+                        statusBadge = '<span class="badge bg-success">可借用</span>'; 
+                        // 🔥 如果可借用，把名稱變成一顆漂亮的借用按鈕！
+                        nameDisplay = `<button class="btn btn-sm btn-outline-primary fw-bold w-100 shadow-sm" onclick="openConfirmBorrowModal(${tool.id}, '${tool.name}')">${tool.name}</button>`;
+                        break;
                     case 'borrowed': statusBadge = '<span class="badge bg-secondary">已借出</span>'; break;
                     case 'pending_borrow': statusBadge = '<span class="badge bg-warning text-dark">借出審核中</span>'; break;
                     case 'pending_return': statusBadge = '<span class="badge bg-info text-dark">歸還審核中</span>'; break;
@@ -254,10 +278,57 @@
                 tbody.innerHTML += `
                     <tr>
                         <td>${index + 1}</td>
-                        <td>${tool.name}</td>
-                        <td>${statusBadge}</td>
-                        <td>${tool.borrower || '-'}</td>
+                        <!-- 🔥 這裡改印出 nameDisplay -->
+                        <td class="align-middle">${nameDisplay}</td>
+                        <td class="align-middle">${statusBadge}</td>
+                        <td class="align-middle">${tool.borrower || '-'}</td>
                     </tr>`;
+            });
+        }
+        // ==========================================
+        //          彈窗與直接借用邏輯
+        // ==========================================
+        let confirmBorrowModalInstance;
+        let selectedToolId = null;
+        let selectedToolName = '';
+
+        // 1. 打開確認彈窗
+        function openConfirmBorrowModal(id, name) {
+            selectedToolId = id;
+            selectedToolName = name;
+            document.getElementById('confirmBorrowToolName').innerText = name;
+            
+            if (!confirmBorrowModalInstance) {
+                confirmBorrowModalInstance = new bootstrap.Modal(document.getElementById('confirmBorrowModal'));
+            }
+            confirmBorrowModalInstance.show();
+        }
+
+        // 2. 執行借用並防止連點
+        function executeBorrow() {
+            const btn = document.getElementById('confirmBorrowBtn');
+            btn.disabled = true; // 🔒 鎖定按鈕，防止使用者狂點兩下
+            btn.innerText = '處理中...';
+
+            fetch('./borrow', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ toolId: selectedToolId, toolName: selectedToolName, userName: currentUser })
+            }).then(res => res.json()).then(data => {
+                confirmBorrowModalInstance.hide(); // 關閉彈窗
+                btn.disabled = false; // 🔓 解鎖按鈕
+                btn.innerText = '確認送出';
+
+                if (data.success) {
+                    showMessage('申請成功', data.message, 'success');
+                    loadDashboard(); // 重新載入表格，按鈕會瞬間變成黃色的「審核中」
+                } else {
+                    showMessage('申請失敗', data.message, 'danger');
+                }
+            }).catch(() => {
+                btn.disabled = false;
+                btn.innerText = '確認送出';
+                showMessage('連線錯誤', '無法連線到伺服器！', 'danger');
             });
         }
 
