@@ -9,24 +9,23 @@ const LINE_TARGET_IDS = [
 ]; 
 
 async function sendLineMessage(message) {
-    if (!LINE_CHANNEL_ACCESS_TOKEN || LINE_TARGET_IDS.length === 0) return;
+    if (!LINE_CHANNEL_ACCESS_TOKEN) return;
     
-    for (let targetId of LINE_TARGET_IDS) {
-        try {
-            await fetch('https://api.line.me/v2/bot/message/push', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
-                },
-                body: JSON.stringify({
-                    to: targetId,
-                    messages: [{ type: 'text', text: message }]
-                })
-            });
-        } catch (error) {
-            console.error(`❌ 發送給 ${targetId} 失敗：`, error);
-        }
+    try {
+        // 💡 注意：網址從 /push 變成了 /broadcast
+        await fetch('https://api.line.me/v2/bot/message/broadcast', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
+            },
+            body: JSON.stringify({
+                // 💡 廣播不需要填寫 'to: targetId'，直接放 messages 即可
+                messages: [{ type: 'text', text: message }]
+            })
+        });
+    } catch (error) {
+        console.error(`❌ 廣播發送失敗：`, error);
     }
 }
 
@@ -42,13 +41,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('./'));
 
-// 新增 Webhook 路由
+// 新增 Webhook 路由：自動判斷是個人還是群組
 app.post('/webhook', (req, res) => {
     const events = req.body.events;
     if (events && events.length > 0) {
         events.forEach(event => {
             if (event.type === 'message' && event.message.type === 'text') {
-                console.log(`\n🕵️‍♂️ 抓到新 ID 了！\n傳訊者 ID: ${event.source.userId}\n他說了: ${event.message.text}\n`);
+                const source = event.source;
+                let targetId = source.userId; // 預設抓取個人 ID (U開頭)
+                let sourceType = '個人';
+
+                // 💡 關鍵判斷：如果訊息來自群組，就改抓群組 ID (C開頭)
+                if (source.type === 'group') {
+                    targetId = source.groupId;
+                    sourceType = '群組';
+                }
+
+                console.log(`\n🕵️‍♂️ 抓到新 ID 了！`);
+                console.log(`📍 來源：${sourceType}`);
+                console.log(`🔑 專屬 ID：${targetId}`);
+                console.log(`💬 訊息內容：${event.message.text}\n`);
             }
         });
     }
