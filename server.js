@@ -4,8 +4,7 @@
 const LINE_CHANNEL_ACCESS_TOKEN = 'aVlWREci9FWVcYv1FzsOv73nYD9LlFo0LGXdaGZRP03CRXuFAt2GZmUhjz3PgMGM2APcCNWYY27ZxS44Dy6GJLcPBVQ58KEFKdI5FRC1rrU9bLqZT2BXvzGb9o0L7BQKcrhb7tZFYuOpwoCLLldc9gdB04t89/1O/w1cDnyilFU=';
 
 const LINE_TARGET_IDS = [
-    'U15b897ad9424ecfacca134c08f355bb0', 
-    'Ub841da64caa16c35d7b50396eab720ed'
+    'C099aea42698a73a1f405bc99b33964d9', 
 ]; 
 
 async function sendLineMessage(message) {
