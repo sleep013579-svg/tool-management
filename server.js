@@ -3,28 +3,34 @@
 // ==========================================
 const LINE_CHANNEL_ACCESS_TOKEN = 'aVlWREci9FWVcYv1FzsOv73nYD9LlFo0LGXdaGZRP03CRXuFAt2GZmUhjz3PgMGM2APcCNWYY27ZxS44Dy6GJLcPBVQ58KEFKdI5FRC1rrU9bLqZT2BXvzGb9o0L7BQKcrhb7tZFYuOpwoCLLldc9gdB04t89/1O/w1cDnyilFU=';
 
+// 💡 保留你的群組 ID 陣列
 const LINE_TARGET_IDS = [
-    'C099aea42698a73a1f405bc99b33964d9', 
+    'C099aea42698a73a1f405bc99b33964d9'
 ]; 
 
+// 💡 替換這個發送函數
 async function sendLineMessage(message) {
-    if (!LINE_CHANNEL_ACCESS_TOKEN) return;
+    if (!LINE_CHANNEL_ACCESS_TOKEN || LINE_TARGET_IDS.length === 0) return;
     
-    try {
-        // 💡 注意：網址從 /push 變成了 /broadcast
-        await fetch('https://api.line.me/v2/bot/message/broadcast', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
-            },
-            body: JSON.stringify({
-                // 💡 廣播不需要填寫 'to: targetId'，直接放 messages 即可
-                messages: [{ type: 'text', text: message }]
-            })
-        });
-    } catch (error) {
-        console.error(`❌ 廣播發送失敗：`, error);
+    // 迴圈讀取陣列裡的 ID (目前裡面就是你的群組 ID)
+    for (let targetId of LINE_TARGET_IDS) {
+        try {
+            // ✅ 重點 1：改回 /push API
+            await fetch('https://api.line.me/v2/bot/message/push', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
+                },
+                body: JSON.stringify({
+                    // ✅ 重點 2：明確指定要發給這個 targetId (群組)
+                    to: targetId,
+                    messages: [{ type: 'text', text: message }]
+                })
+            });
+        } catch (error) {
+            console.error(`❌ 發送給 ${targetId} 失敗：`, error);
+        }
     }
 }
 
