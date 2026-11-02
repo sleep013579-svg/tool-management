@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系統管理後台 - 工具借出記錄</title>
+    <title>系統管理後台</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -13,434 +13,237 @@
             <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'">返回主畫面</button>
         </div>
     </nav>
-
     <div class="container">
-        <!-- 頁籤導覽列 (新增審核中心與歷史紀錄) -->
         <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" id="approval-tab" data-bs-toggle="tab" data-bs-target="#approval-pane" type="button">
-                    審核中心 <span class="badge bg-danger ms-1" id="pendingCount">0</span>
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="record-tab" data-bs-toggle="tab" data-bs-target="#record-pane" type="button">歷史紀錄</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="tool-tab" data-bs-toggle="tab" data-bs-target="#tool-pane" type="button">工具品項管理</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="user-tab" data-bs-toggle="tab" data-bs-target="#user-pane" type="button">人員權限管理</button>
-            </li>
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#approval-pane" type="button">審核中心 <span class="badge bg-danger ms-1" id="pendingCount">0</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#record-pane" type="button">歷史紀錄</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tool-pane" type="button">工具品項管理</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#user-pane" type="button">人員權限管理</button></li>
         </ul>
-
-        <!-- 頁籤內容區 -->
         <div class="tab-content" id="adminTabsContent">
-            
-            <!-- 1. 審核中心區塊 -->
+            <!-- 審核中心 -->
             <div class="tab-pane fade show active" id="approval-pane">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <table class="table table-hover align-middle text-center">
-                            <thead class="table-warning">
-                                <tr>
-                                    <th>單號</th>
-                                    <th>工具名稱</th>
-                                    <th>申請人</th>
-                                    <th>動作</th>
-                                    <th>申請時間</th>
-                                    <th>審核操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="approvalTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="card shadow-sm"><div class="card-body"><table class="table table-hover align-middle text-center"><thead class="table-warning"><tr><th>序號</th><th>工具名稱</th><th>申請人</th><th>動作</th><th>申請時間</th><th>審核操作</th></tr></thead><tbody id="approvalTableBody"></tbody></table></div></div>
             </div>
-
-            <!-- 2. 歷史紀錄區塊 -->
+            <!-- 歷史紀錄 -->
             <div class="tab-pane fade" id="record-pane">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <table class="table table-hover align-middle text-center table-sm fs-6">
-                            <thead class="table-secondary">
-                                <tr>
-                                    <th>單號</th>
-                                    <th>工具</th>
-                                    <th>申請人</th>
-                                    <th>動作</th>
-                                    <th>狀態</th>
-                                    <th>申請時間</th>
-                                    <th>審核人</th>
-                                    <th>審核時間</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recordTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="card shadow-sm"><div class="card-body"><table class="table table-hover align-middle text-center table-sm fs-6"><thead class="table-secondary"><tr><th>序號</th><th>工具</th><th>申請人</th><th>動作</th><th>狀態</th><th>申請時間</th><th>審核人</th><th>審核時間</th></tr></thead><tbody id="recordTableBody"></tbody></table></div></div>
             </div>
-
-            <!-- 3. 工具管理區塊 -->
+            <!-- 工具管理 -->
             <div class="tab-pane fade" id="tool-pane">
-                <div class="d-flex justify-content-end mb-2">
-                    <button class="btn btn-success" onclick="openAddToolModal()">➕ 新增工具品項</button>
-                </div>
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <table class="table table-hover align-middle text-center">
-                            <thead class="table-primary">
-                                <tr><th>ID</th><th>工具名稱</th><th>當前狀態</th><th>借出人</th><th>操作</th></tr>
-                            </thead>
-                            <tbody id="toolTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="d-flex justify-content-end mb-2"><button class="btn btn-success" onclick="openAddToolModal()">➕ 新增工具品項</button></div>
+                <div class="card shadow-sm"><div class="card-body"><table class="table table-hover align-middle text-center"><thead class="table-primary"><tr><th>序號</th><th>工具名稱</th><th>當前狀態</th><th>借出人</th><th>操作</th></tr></thead><tbody id="toolTableBody"></tbody></table></div></div>
             </div>
-
-            <!-- 4. 人員管理區塊 -->
+            <!-- 人員管理 -->
             <div class="tab-pane fade" id="user-pane">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <table class="table table-hover align-middle text-center">
-                            <thead class="table-dark">
-                                <tr><th>ID</th><th>名稱</th><th>密碼</th><th>權限</th><th>操作</th></tr>
-                            </thead>
-                            <tbody id="userTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="card shadow-sm"><div class="card-body"><table class="table table-hover align-middle text-center"><thead class="table-dark"><tr><th>序號</th><th>名稱</th><th>密碼</th><th>權限</th><th>操作</th></tr></thead><tbody id="userTableBody"></tbody></table></div></div>
             </div>
-            
         </div>
     </div>
 
-    <!-- (Modals 彈跳視窗區塊 - 保留與之前完全相同的設定) -->
-    <!-- 更改權限 -->
-    <div class="modal fade" id="roleModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">更改人員權限</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="roleUserId"><input type="hidden" id="roleUserName"><div class="mb-3"><label class="form-label">請選擇新的權限：</label><select class="form-select" id="roleSelect"><option value="user">一般使用者</option><option value="admin">管理員</option><option value="super_admin">總權限</option></select></div><button type="button" class="btn btn-primary w-100" onclick="saveRole()">確認儲存</button></div></div></div></div>
-    <!-- 更改名稱 -->
-    <div class="modal fade" id="nameModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">更改人員名稱</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="nameUserId"><input type="hidden" id="nameUserRole"><div class="mb-3"><label class="form-label">請輸入新的名稱：</label><input type="text" class="form-control" id="nameInputModal" required></div><button type="button" class="btn btn-primary w-100" onclick="saveName()">確認儲存</button></div></div></div></div>
-    <!-- 重設密碼 -->
-    <div class="modal fade" id="pwdModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">重設密碼</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="pwdUserId"><div class="mb-3"><label class="form-label">請輸入要重設的新密碼：</label><input type="text" class="form-control" id="pwdInputModal" value="1234" required></div><button type="button" class="btn btn-warning w-100" onclick="savePwd()">確認重設</button></div></div></div></div>
-    <!-- 刪除帳號 -->
-    <div class="modal fade" id="deleteModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title text-danger">⚠️ 刪除帳號</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><input type="hidden" id="deleteUserId"><p class="fs-5">確定要刪除 <strong id="deleteUserNameText" class="text-danger"></strong> 嗎？</p><button type="button" class="btn btn-danger w-100 mt-2" onclick="confirmDelete()">確認刪除</button></div></div></div></div>
-    <!-- 新增工具 -->
-    <div class="modal fade" id="addToolModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">新增工具品項</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="mb-3"><label class="form-label">請輸入工具名稱：</label><input type="text" class="form-control" id="toolNameInput" required></div><button type="button" class="btn btn-success w-100" onclick="addTool()">確認新增</button></div></div></div></div>
-    <!-- 刪除工具 -->
-    <div class="modal fade" id="deleteToolModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title text-danger">⚠️ 刪除工具</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><input type="hidden" id="deleteToolId"><p class="fs-5">確定要刪除工具 <strong id="deleteToolNameText" class="text-danger"></strong> 嗎？</p><button type="button" class="btn btn-danger w-100 mt-2" onclick="confirmDeleteTool()">確認刪除</button></div></div></div></div>
-    <!-- 共用訊息提示 -->
+    <!-- Modals -->
     <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content"><div class="modal-header" id="messageModalHeader"><h5 class="modal-title" id="messageModalTitle">提示</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><p id="messageModalBody" class="mb-0 fs-6"></p></div><div class="modal-footer justify-content-center"><button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">確定</button></div></div></div></div>
-<!-- 編輯工具狀態 -->
-    <div class="modal fade" id="editToolStatusModal" tabindex="-1">
+
+    <!-- 新增工具 -->
+    <div class="modal fade" id="addToolModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">強制更改工具狀態</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header"><h5 class="modal-title">新增工具品項</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <input type="hidden" id="editToolId">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">工具名稱：</label>
-                        <p id="editToolNameText" class="mb-0"></p>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">請選擇新狀態：</label>
-                        <select class="form-select" id="editToolStatusSelect">
-                            <option value="available">可借出 (available)</option>
-                            <option value="borrowed">已借出 (borrowed)</option>
-                            <option value="pending_borrow">借出審核中 (pending_borrow)</option>
-                            <option value="pending_return">歸還審核中 (pending_return)</option>
-                            <!-- 💡 新增這兩個狀態 -->
-                            <option value="maintenance">待維修 (maintenance)</option>
-                            <option value="damaged">已損壞 (damaged)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">借出人 (若無借出人請清空)：</label>
-                        <!-- 💡 改用 datalist 實現可搜尋的下拉選單 -->
-                        <input class="form-control" list="userDatalist" id="editToolBorrowerInput" placeholder="請搜尋或輸入借出人帳號..." autocomplete="off">
-                        <datalist id="userDatalist">
-                            <!-- 這裡會由下方的 JS 自動載入所有人員名單 -->
-                        </datalist>
-                    </div>
-                    <button type="button" class="btn btn-primary w-100" onclick="saveToolStatus()">確認儲存</button>
+                    <div class="mb-3"><label class="form-label">請輸入工具名稱：</label><input type="text" class="form-control" id="toolNameInput" required></div>
+                    <div class="mb-3"><label class="form-label">上傳工具照片 (選填)：</label><input type="file" class="form-control" id="toolImageInput" accept="image/*"><small class="text-muted">建議上傳小於 2MB 的照片</small></div>
+                    <button type="button" class="btn btn-success w-100" onclick="addTool()">確認新增</button>
                 </div>
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- 🌟 修改工具資料與更換照片 -->
+    <div class="modal fade" id="editToolInfoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">修改資料與照片</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="editToolInfoId">
+                    <div class="mb-3"><label class="form-label">工具名稱：</label><input type="text" class="form-control" id="editToolInfoName" required></div>
+                    <div class="mb-3">
+                        <label class="form-label">更換照片 (若不更換請留空)：</label>
+                        <input type="file" class="form-control" id="editToolInfoImage" accept="image/*">
+                        <small class="text-muted">上傳新照片將直接覆蓋舊照片</small>
+                    </div>
+                    <button type="button" class="btn btn-info text-white w-100" onclick="saveToolInfo()">確認修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 刪除與狀態修改 -->
+    <div class="modal fade" id="deleteToolModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title text-danger">⚠️ 刪除工具</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><input type="hidden" id="deleteToolId"><p class="fs-5">確定要刪除工具 <strong id="deleteToolNameText" class="text-danger"></strong> 嗎？</p><button type="button" class="btn btn-danger w-100 mt-2" onclick="confirmDeleteTool()">確認刪除</button></div></div></div></div>
+    <div class="modal fade" id="editToolStatusModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">強制更改狀態</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="editToolId"><div class="mb-3"><label class="form-label fw-bold">工具名稱：</label><p id="editToolNameText" class="mb-0"></p></div><div class="mb-3"><label class="form-label">請選擇新狀態：</label><select class="form-select" id="editToolStatusSelect"><option value="available">可借出</option><option value="borrowed">已借出</option><option value="pending_borrow">借出審核中</option><option value="pending_return">歸還審核中</option><option value="maintenance">待維修</option><option value="damaged">已損壞</option></select></div><div class="mb-3"><label class="form-label">借出人：</label><input class="form-control" list="userDatalist" id="editToolBorrowerInput" placeholder="搜尋或輸入帳號..."><datalist id="userDatalist"></datalist></div><button type="button" class="btn btn-primary w-100" onclick="saveToolStatus()">確認儲存</button></div></div></div></div>
+    
+    <!-- 人員管理區塊 -->
+    <div class="modal fade" id="roleModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">更改人員權限</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="roleUserId"><input type="hidden" id="roleUserName"><div class="mb-3"><label class="form-label">請選擇新的權限：</label><select class="form-select" id="roleSelect"><option value="user">一般使用者</option><option value="admin">管理員</option><option value="super_admin">總權限</option></select></div><button type="button" class="btn btn-primary w-100" onclick="saveRole()">確認儲存</button></div></div></div></div>
+    <div class="modal fade" id="nameModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">更改人員名稱</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="nameUserId"><input type="hidden" id="nameUserRole"><div class="mb-3"><label class="form-label">請輸入新的名稱：</label><input type="text" class="form-control" id="nameInputModal" required></div><button type="button" class="btn btn-primary w-100" onclick="saveName()">確認儲存</button></div></div></div></div>
+    <div class="modal fade" id="pwdModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">重設密碼</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="pwdUserId"><div class="mb-3"><label class="form-label">請輸入要重設的新密碼：</label><input type="text" class="form-control" id="pwdInputModal" value="1234" required></div><button type="button" class="btn btn-warning w-100" onclick="savePwd()">確認重設</button></div></div></div></div>
+    <div class="modal fade" id="deleteModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title text-danger">⚠️ 刪除帳號</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><input type="hidden" id="deleteUserId"><p class="fs-5">確定要刪除 <strong id="deleteUserNameText" class="text-danger"></strong> 嗎？</p><button type="button" class="btn btn-danger w-100 mt-2" onclick="confirmDelete()">確認刪除</button></div></div></div></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const currentRole = localStorage.getItem('currentRole');
         const currentUser = localStorage.getItem('currentUser');
-        
-        if (currentRole !== 'admin' && currentRole !== 'super_admin') {
-            alert('系統阻擋：您沒有權限進入此頁面！');
-            window.location.href = 'dashboard.html';
-        }
+        if (currentRole !== 'admin' && currentRole !== 'super_admin') { alert('系統阻擋：權限不足！'); window.location.href = 'dashboard.html'; }
 
-        // --- 共用訊息 Modal ---
-        let msgModalInstance;
+        let msgModalInstance, addToolModalInstance, deleteToolModalInstance, editToolStatusModalInstance, editToolInfoModalInstance;
+        let roleModalInstance, nameModalInstance, pwdModalInstance, deleteModalInstance;
+
         function showMessage(title, message, type = 'success') {
             document.getElementById('messageModalTitle').innerText = title;
             document.getElementById('messageModalBody').innerText = message;
             document.getElementById('messageModalHeader').className = `modal-header bg-${type} text-white`;
-            if (type === 'warning' || type === 'light') {
-                document.getElementById('messageModalHeader').classList.remove('text-white');
-            }
-            if (!msgModalInstance) {
-                msgModalInstance = new bootstrap.Modal(document.getElementById('messageModal'));
-            }
+            if (type === 'warning' || type === 'light') document.getElementById('messageModalHeader').classList.remove('text-white');
+            if (!msgModalInstance) msgModalInstance = new bootstrap.Modal(document.getElementById('messageModal'));
             msgModalInstance.show();
         }
 
-        // --- 1. 審核中心與歷史紀錄邏輯 ---
         function loadApprovalsAndRecords() {
-            fetch('./admin/pending-requests')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        const tbody = document.getElementById('approvalTableBody');
-                        tbody.innerHTML = '';
-                        document.getElementById('pendingCount').innerText = data.data.length;
-
-                        data.data.forEach((req, index) => {
-                            let actionBadge = req.action === '借出' ? '<span class="badge bg-warning text-dark">借出申請</span>' : '<span class="badge bg-info text-dark">歸還申請</span>';
-                            tbody.innerHTML += `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td class="fw-bold">${req.tool_name}</td>
-                                    <td>${req.user_name}</td>
-                                    <td>${actionBadge}</td>
-                                    <td><small class="text-muted">${req.request_time}</small></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-success me-1" onclick="handleApproval(${req.id}, ${req.tool_id}, '${req.action}', true)">✔️ 同意</button>
-                                        <button class="btn btn-sm btn-danger" onclick="handleApproval(${req.id}, ${req.tool_id}, '${req.action}', false)">❌ 拒絕</button>
-                                    </td>
-                                </tr>`;
-                        });
-                        if (data.data.length === 0) tbody.innerHTML = '<tr><td colspan="6" class="text-muted py-4">目前沒有待審核的申請</td></tr>';
-                    }
-                });
-
-            fetch('./admin/all-records')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        const tbody = document.getElementById('recordTableBody');
-                        tbody.innerHTML = '';
-                        data.data.forEach((rec, index) => {
-                            let statusBadge = rec.status === '已核准' ? '<span class="badge bg-success">已核准</span>' : 
-                                              (rec.status === '已拒絕' ? '<span class="badge bg-danger">已拒絕</span>' : '<span class="badge bg-secondary">待審核</span>');
-                            tbody.innerHTML += `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${rec.tool_name}</td>
-                                    <td>${rec.user_name}</td>
-                                    <td>${rec.action}</td>
-                                    <td>${statusBadge}</td>
-                                    <td>${rec.request_time}</td>
-                                    <td>${rec.approver}</td>
-                                    <td>${rec.approve_time}</td>
-                                </tr>`;
-                        });
-                    }
-                });
-        }
-
-        function handleApproval(recordId, toolId, action, isApproved) {
-            fetch('./admin/approve', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ recordId, toolId, action, isApproved, operatorName: currentUser, operatorRole: currentRole })
-            }).then(res => res.json()).then(data => {
-                showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger');
-                loadApprovalsAndRecords();
-                loadTools(); 
-            });
-        }
-
-        // --- 2. 工具管理邏輯 ---
-       function loadTools() {
-            fetch('./tools').then(res => res.json()).then(data => {
+            fetch('./admin/pending-requests').then(res => res.json()).then(data => {
                 if (data.success) {
-                    const tbody = document.getElementById('toolTableBody');
-                    tbody.innerHTML = '';
-                    data.data.forEach((tool, index) => {
-                        let statusText = tool.status === 'available' ? '<span class="badge bg-success">可借出</span>' : 
-                                         (tool.status === 'borrowed' ? '<span class="badge bg-secondary">已借出</span>' : 
-                                         (tool.status === 'pending_borrow' ? '<span class="badge bg-warning text-dark">借出審核中</span>' : '<span class="badge bg-info text-dark">歸還審核中</span>'));
-                        
-                        // 替換這行：加入編輯按鈕
-                        tbody.innerHTML += `<tr>
-                            <td>${index + 1}</td>
-                            <td>${tool.name}</td>
-                            <td>${statusText}</td>
-                            <td>${tool.borrower || '-'}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditToolStatusModal(${tool.id}, '${tool.name}', '${tool.status}', '${tool.borrower || ''}')">編輯</button>
-                                <button class="btn btn-sm btn-danger" onclick="openDeleteToolModal(${tool.id}, '${tool.name}')">刪除</button>
-                            </td>
-                        </tr>`;
+                    const tbody = document.getElementById('approvalTableBody'); tbody.innerHTML = '';
+                    document.getElementById('pendingCount').innerText = data.data.length;
+                    data.data.forEach((req, index) => {
+                        let badge = req.action === '借出' ? '<span class="badge bg-warning text-dark">借出申請</span>' : '<span class="badge bg-info text-dark">歸還申請</span>';
+                        tbody.innerHTML += `<tr><td>${index + 1}</td><td class="fw-bold">${req.tool_name}</td><td>${req.user_name}</td><td>${badge}</td><td><small>${req.request_time}</small></td><td><button class="btn btn-sm btn-success me-1" onclick="handleApproval(${req.id}, ${req.tool_id}, '${req.action}', true)">✔️</button><button class="btn btn-sm btn-danger" onclick="handleApproval(${req.id}, ${req.tool_id}, '${req.action}', false)">❌</button></td></tr>`;
+                    });
+                }
+            });
+            fetch('./admin/all-records').then(res => res.json()).then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('recordTableBody'); tbody.innerHTML = '';
+                    data.data.forEach((rec, index) => {
+                        let badge = rec.status === '已核准' ? '<span class="badge bg-success">已核准</span>' : (rec.status === '已拒絕' ? '<span class="badge bg-danger">已拒絕</span>' : '<span class="badge bg-secondary">待審核</span>');
+                        tbody.innerHTML += `<tr><td>${index + 1}</td><td>${rec.tool_name}</td><td>${rec.user_name}</td><td>${rec.action}</td><td>${badge}</td><td>${rec.request_time}</td><td>${rec.approver}</td><td>${rec.approve_time}</td></tr>`;
                     });
                 }
             });
         }
 
-        let addToolModalInstance, deleteToolModalInstance;
+        function handleApproval(recordId, toolId, action, isApproved) {
+            fetch('./admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recordId, toolId, action, isApproved, operatorName: currentUser, operatorRole: currentRole }) }).then(res => res.json()).then(data => { showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); loadApprovalsAndRecords(); loadTools(); });
+        }
+
+        function loadTools() {
+            fetch('./tools').then(res => res.json()).then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('toolTableBody'); tbody.innerHTML = '';
+                    data.data.forEach((tool, index) => {
+                        let badge = tool.status === 'available' ? '<span class="badge bg-success">可借出</span>' : (tool.status === 'borrowed' ? '<span class="badge bg-secondary">已借出</span>' : (tool.status === 'pending_borrow' ? '<span class="badge bg-warning text-dark">借出審核中</span>' : (tool.status === 'pending_return' ? '<span class="badge bg-info text-dark">歸還審核中</span>' : (tool.status === 'maintenance' ? '<span class="badge bg-danger">待維修</span>' : '<span class="badge bg-dark">已損壞</span>'))));
+                        
+                        // 🌟 按鈕區新增「改資料/照片」
+                        tbody.innerHTML += `<tr><td>${index + 1}</td><td>${tool.name}</td><td>${badge}</td><td>${tool.borrower || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info me-1" onclick="openEditToolInfoModal(${tool.id}, '${tool.name}')">改資料/照片</button>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditToolStatusModal(${tool.id}, '${tool.name}', '${tool.status}', '${tool.borrower || ''}')">改狀態</button>
+                            <button class="btn btn-sm btn-danger" onclick="openDeleteToolModal(${tool.id}, '${tool.name}')">刪除</button>
+                        </td></tr>`;
+                    });
+                }
+            });
+        }
 
         function openAddToolModal() {
             document.getElementById('toolNameInput').value = '';
+            document.getElementById('toolImageInput').value = ''; 
             if (!addToolModalInstance) addToolModalInstance = new bootstrap.Modal(document.getElementById('addToolModal'));
             addToolModalInstance.show();
         }
 
         function addTool() {
             const name = document.getElementById('toolNameInput').value;
+            const fileInput = document.getElementById('toolImageInput');
             if (!name) return showMessage('錯誤', '名稱不能為空', 'danger');
-            
-            fetch('./admin/add-tool', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name, operatorRole: currentRole })
-            }).then(res => res.json()).then(data => {
-                addToolModalInstance.hide();
-                loadTools();
-                showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger');
-            });
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                if (file.size > 2 * 1024 * 1024) return showMessage('錯誤', '圖片太大了，請上傳小於 2MB 的照片', 'warning');
+                const reader = new FileReader();
+                reader.onload = function(e) { sendAddToolRequest(name, e.target.result); };
+                reader.readAsDataURL(file);
+            } else { sendAddToolRequest(name, ''); }
+        }
+        function sendAddToolRequest(name, imageBase64) {
+            fetch('./admin/add-tool', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, image: imageBase64, operatorRole: currentRole }) }).then(res => res.json()).then(data => { addToolModalInstance.hide(); loadTools(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); });
         }
 
-        function openDeleteToolModal(id, name) {
-            document.getElementById('deleteToolId').value = id;
-            document.getElementById('deleteToolNameText').innerText = name;
-            if (!deleteToolModalInstance) deleteToolModalInstance = new bootstrap.Modal(document.getElementById('deleteToolModal'));
-            deleteToolModalInstance.show();
+        // 🌟 新增功能：開啟修改資料與照片彈窗
+        function openEditToolInfoModal(id, name) {
+            document.getElementById('editToolInfoId').value = id;
+            document.getElementById('editToolInfoName').value = name;
+            document.getElementById('editToolInfoImage').value = ''; // 每次開啟先清空上傳欄位
+            if (!editToolInfoModalInstance) editToolInfoModalInstance = new bootstrap.Modal(document.getElementById('editToolInfoModal'));
+            editToolInfoModalInstance.show();
         }
 
-        function confirmDeleteTool() {
-            const id = document.getElementById('deleteToolId').value;
-            fetch('./admin/delete-tool', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id, operatorRole: currentRole })
-            }).then(res => res.json()).then(data => {
-                deleteToolModalInstance.hide();
-                loadTools();
-                showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger');
-            });
-        }
-let editToolStatusModalInstance;
+        // 🌟 新增功能：執行資料修改與圖片轉換
+        function saveToolInfo() {
+            const id = document.getElementById('editToolInfoId').value;
+            const name = document.getElementById('editToolInfoName').value;
+            const fileInput = document.getElementById('editToolInfoImage');
+            if (!name) return showMessage('錯誤', '名稱不能為空', 'danger');
 
-        function openEditToolStatusModal(id, name, currentStatus, currentBorrower) {
-            document.getElementById('editToolId').value = id;
-            document.getElementById('editToolNameText').innerText = name;
-            document.getElementById('editToolStatusSelect').value = currentStatus;
-            document.getElementById('editToolBorrowerInput').value = currentBorrower;
-            
-            if (!editToolStatusModalInstance) {
-                editToolStatusModalInstance = new bootstrap.Modal(document.getElementById('editToolStatusModal'));
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                if (file.size > 2 * 1024 * 1024) return showMessage('錯誤', '圖片太大了，建議小於 2MB', 'warning');
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    sendEditToolInfoRequest(id, name, e.target.result, true); // true 代表要更新圖片
+                };
+                reader.readAsDataURL(file);
+            } else {
+                sendEditToolInfoRequest(id, name, '', false); // false 代表只更新名稱，不洗掉原本的圖片
             }
-            editToolStatusModalInstance.show();
         }
 
-        function saveToolStatus() {
-            const toolId = document.getElementById('editToolId').value;
-            const newStatus = document.getElementById('editToolStatusSelect').value;
-            const newBorrower = document.getElementById('editToolBorrowerInput').value;
-
-            fetch('./admin/edit-tool-status', {
+        // 🌟 新增功能：發送給後端
+        function sendEditToolInfoRequest(toolId, newName, newImage, updateImage) {
+            fetch('./admin/edit-tool-info', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ toolId, newStatus, newBorrower, operatorRole: currentRole })
+                body: JSON.stringify({ toolId, newName, newImage, updateImage, operatorRole: currentRole })
             }).then(res => res.json()).then(data => {
-                editToolStatusModalInstance.hide();
-                loadTools(); // 重新載入表格
+                editToolInfoModalInstance.hide();
+                loadTools();
                 showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger');
             });
         }
-        // --- 3. 人員管理邏輯 ---
-       function loadUsers() {
+
+        function openDeleteToolModal(id, name) { document.getElementById('deleteToolId').value = id; document.getElementById('deleteToolNameText').innerText = name; if (!deleteToolModalInstance) deleteToolModalInstance = new bootstrap.Modal(document.getElementById('deleteToolModal')); deleteToolModalInstance.show(); }
+        function confirmDeleteTool() { fetch('./admin/delete-tool', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: document.getElementById('deleteToolId').value, operatorRole: currentRole }) }).then(res => res.json()).then(data => { deleteToolModalInstance.hide(); loadTools(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); }); }
+        function openEditToolStatusModal(id, name, status, borrower) { document.getElementById('editToolId').value = id; document.getElementById('editToolNameText').innerText = name; document.getElementById('editToolStatusSelect').value = status; document.getElementById('editToolBorrowerInput').value = borrower; if (!editToolStatusModalInstance) editToolStatusModalInstance = new bootstrap.Modal(document.getElementById('editToolStatusModal')); editToolStatusModalInstance.show(); }
+        function saveToolStatus() { fetch('./admin/edit-tool-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toolId: document.getElementById('editToolId').value, newStatus: document.getElementById('editToolStatusSelect').value, newBorrower: document.getElementById('editToolBorrowerInput').value, operatorRole: currentRole }) }).then(res => res.json()).then(data => { editToolStatusModalInstance.hide(); loadTools(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); }); }
+
+        function loadUsers() {
             fetch(`./admin/users?role=${currentRole}`).then(res => res.json()).then(data => {
                 if (data.success) {
-                    const tbody = document.getElementById('userTableBody');
-                    const datalist = document.getElementById('userDatalist'); // 抓取 datalist
-                    tbody.innerHTML = '';
-                    if(datalist) datalist.innerHTML = ''; // 清空選項
-                    
+                    const tbody = document.getElementById('userTableBody'); const datalist = document.getElementById('userDatalist');
+                    tbody.innerHTML = ''; if(datalist) datalist.innerHTML = '';
                     data.data.forEach((user, index) => {
                         let roleName = user.role === 'super_admin' ? '總權限' : (user.role === 'admin' ? '管理員' : '一般使用者');
-                        let editBtnHtml = currentRole === 'super_admin' ? 
-                            `<button class="btn btn-sm btn-outline-primary me-1" onclick="openNameModal(${user.id}, '${user.name}', '${user.role}')">改名</button><button class="btn btn-sm btn-outline-info me-1" onclick="openRoleModal(${user.id}, '${user.name}', '${user.role}')">改權限</button>` : 
-                            `<button class="btn btn-sm btn-outline-primary me-1" onclick="openNameModal(${user.id}, '${user.name}', '${user.role}')">改名</button>`;
-                        tbody.innerHTML += `<tr><td>${index + 1}</td><td>${user.name}</td><td><span class="text-danger">${user.password}</span></td><td><span class="badge bg-secondary">${roleName}</span></td><td>${editBtnHtml}<button class="btn btn-sm btn-warning me-1" onclick="openPwdModal(${user.id})">重設密碼</button><button class="btn btn-sm btn-danger" onclick="openDeleteModal(${user.id}, '${user.name}')">刪除</button></td></tr>`;
-                        
-                        // 💡 將每一位人員的名稱加入到搜尋選項中
+                        let editBtns = currentRole === 'super_admin' ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="openNameModal(${user.id}, '${user.name}', '${user.role}')">改名</button><button class="btn btn-sm btn-outline-info me-1" onclick="openRoleModal(${user.id}, '${user.name}', '${user.role}')">改權限</button>` : `<button class="btn btn-sm btn-outline-primary me-1" onclick="openNameModal(${user.id}, '${user.name}', '${user.role}')">改名</button>`;
+                        tbody.innerHTML += `<tr><td>${index + 1}</td><td>${user.name}</td><td><span class="text-danger">${user.password}</span></td><td><span class="badge bg-secondary">${roleName}</span></td><td>${editBtns}<button class="btn btn-sm btn-warning me-1" onclick="openPwdModal(${user.id})">重設密碼</button><button class="btn btn-sm btn-danger" onclick="openDeleteModal(${user.id}, '${user.name}')">刪除</button></td></tr>`;
                         if(datalist) datalist.innerHTML += `<option value="${user.name}">`;
                     });
                 }
             });
         }
+        function openNameModal(id, oldName, role) { document.getElementById('nameUserId').value = id; document.getElementById('nameUserRole').value = role; document.getElementById('nameInputModal').value = oldName; if (!nameModalInstance) nameModalInstance = new bootstrap.Modal(document.getElementById('nameModal')); nameModalInstance.show(); }
+        function saveName() { const name = document.getElementById('nameInputModal').value; if (!name) return showMessage('錯誤', '名稱不能為空', 'danger'); fetch('./admin/edit-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: document.getElementById('nameUserId').value, name, role: document.getElementById('nameUserRole').value, operatorRole: currentRole }) }).then(res => res.json()).then(data => { nameModalInstance.hide(); loadUsers(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); }); }
+        function openRoleModal(id, name, role) { document.getElementById('roleUserId').value = id; document.getElementById('roleUserName').value = name; document.getElementById('roleSelect').value = role; if (!roleModalInstance) roleModalInstance = new bootstrap.Modal(document.getElementById('roleModal')); roleModalInstance.show(); }
+        function saveRole() { fetch('./admin/edit-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: document.getElementById('roleUserId').value, name: document.getElementById('roleUserName').value, role: document.getElementById('roleSelect').value, operatorRole: currentRole }) }).then(res => res.json()).then(data => { roleModalInstance.hide(); loadUsers(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); }); }
+        function openPwdModal(id) { document.getElementById('pwdUserId').value = id; document.getElementById('pwdInputModal').value = '1234'; if (!pwdModalInstance) pwdModalInstance = new bootstrap.Modal(document.getElementById('pwdModal')); pwdModalInstance.show(); }
+        function savePwd() { const newPassword = document.getElementById('pwdInputModal').value; if (!newPassword) return showMessage('錯誤', '密碼不能為空', 'danger'); fetch('./admin/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: document.getElementById('pwdUserId').value, newPassword }) }).then(res => res.json()).then(data => { pwdModalInstance.hide(); loadUsers(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); }); }
+        function openDeleteModal(id, name) { document.getElementById('deleteUserId').value = id; document.getElementById('deleteUserNameText').innerText = name; if (!deleteModalInstance) deleteModalInstance = new bootstrap.Modal(document.getElementById('deleteModal')); deleteModalInstance.show(); }
+        function confirmDelete() { fetch('./admin/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: document.getElementById('deleteUserId').value }) }).then(res => res.json()).then(data => { deleteModalInstance.hide(); loadUsers(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); }); }
 
-        let roleModalInstance, nameModalInstance, pwdModalInstance, deleteModalInstance;
-
-        function openNameModal(id, oldName, role) {
-            document.getElementById('nameUserId').value = id;
-            document.getElementById('nameUserRole').value = role;
-            document.getElementById('nameInputModal').value = oldName;
-            if (!nameModalInstance) nameModalInstance = new bootstrap.Modal(document.getElementById('nameModal'));
-            nameModalInstance.show();
-        }
-
-        function saveName() {
-            const id = document.getElementById('nameUserId').value;
-            const name = document.getElementById('nameInputModal').value;
-            const role = document.getElementById('nameUserRole').value;
-            if (!name) return showMessage('錯誤', '名稱不能為空', 'danger');
-            fetch('./admin/edit-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name, role, operatorRole: currentRole }) }).then(res => res.json()).then(data => { nameModalInstance.hide(); loadUsers(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); });
-        }
-
-        function openRoleModal(id, name, role) {
-            document.getElementById('roleUserId').value = id;
-            document.getElementById('roleUserName').value = name;
-            document.getElementById('roleSelect').value = role;
-            if (!roleModalInstance) roleModalInstance = new bootstrap.Modal(document.getElementById('roleModal'));
-            roleModalInstance.show();
-        }
-
-        function saveRole() {
-            const id = document.getElementById('roleUserId').value;
-            const name = document.getElementById('roleUserName').value;
-            const role = document.getElementById('roleSelect').value;
-            fetch('./admin/edit-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name, role, operatorRole: currentRole }) }).then(res => res.json()).then(data => { roleModalInstance.hide(); loadUsers(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); });
-        }
-
-        function openPwdModal(id) {
-            document.getElementById('pwdUserId').value = id;
-            document.getElementById('pwdInputModal').value = '1234';
-            if (!pwdModalInstance) pwdModalInstance = new bootstrap.Modal(document.getElementById('pwdModal'));
-            pwdModalInstance.show();
-        }
-
-        function savePwd() {
-            const id = document.getElementById('pwdUserId').value;
-            const newPassword = document.getElementById('pwdInputModal').value;
-            if (!newPassword) return showMessage('錯誤', '密碼不能為空', 'danger');
-            fetch('./admin/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, newPassword }) }).then(res => res.json()).then(data => { pwdModalInstance.hide(); loadUsers(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); });
-        }
-
-        function openDeleteModal(id, name) {
-            document.getElementById('deleteUserId').value = id;
-            document.getElementById('deleteUserNameText').innerText = name;
-            if (!deleteModalInstance) deleteModalInstance = new bootstrap.Modal(document.getElementById('deleteModal'));
-            deleteModalInstance.show();
-        }
-
-        function confirmDelete() {
-            const id = document.getElementById('deleteUserId').value;
-            fetch('./admin/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).then(res => res.json()).then(data => { deleteModalInstance.hide(); loadUsers(); showMessage(data.success ? '成功' : '失敗', data.message, data.success ? 'success' : 'danger'); });
-        }
-
-        // --- 初始化載入 ---
         loadApprovalsAndRecords();
         loadTools();
         loadUsers();

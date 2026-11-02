@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <!-- 導覽列 -->
     <nav class="navbar navbar-dark bg-dark mb-4">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">工具借出管理系統</span>
@@ -21,49 +20,30 @@
 
     <div class="container">
         <div class="row">
-            <!-- 左側區域：借用操作與個人狀態 -->
             <div class="col-md-5 mb-4">
-                
-                <!-- 借用新工具區塊 (升級為搜尋輸入框) -->
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">申請借用工具</h5>
-                    </div>
+                    <div class="card-header bg-primary text-white"><h5 class="card-title mb-0">申請借用工具</h5></div>
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label">請搜尋或選擇要借出的工具：</label>
-                            <!-- 改用 datalist 實現可搜尋的下拉選單 -->
                             <input class="form-control" list="toolsDatalist" id="toolSearchInput" placeholder="點此輸入工具名稱..." autocomplete="off">
-                            <datalist id="toolsDatalist">
-                                <!-- JS 動態載入 -->
-                            </datalist>
+                            <datalist id="toolsDatalist"></datalist>
                         </div>
                         <button class="btn btn-primary w-100" onclick="borrowTool()">送出借用申請</button>
                     </div>
                 </div>
-
-                <!-- 個人已借出清單區塊 -->
                 <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="card-title mb-0">我的工具與申請狀態</h5>
-                    </div>
+                    <div class="card-header bg-success text-white"><h5 class="card-title mb-0">我的工具與申請狀態</h5></div>
                     <ul class="list-group list-group-flush" id="myBorrowedList"></ul>
                 </div>
             </div>
 
-<!-- 右側區域：全站工具狀態 -->
             <div class="col-md-7">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="card-title mb-0">全站工具即時狀態</h5>
-                    </div>
-                    
-                    <!-- 💡 新增：動態篩選工具列 -->
+                    <div class="card-header bg-secondary text-white"><h5 class="card-title mb-0">全站工具即時狀態</h5></div>
                     <div class="card-body bg-light border-bottom p-2">
                         <div class="row g-2">
-                            <div class="col-4">
-                                <input type="text" id="filterName" class="form-control form-control-sm" placeholder="🔍 搜尋名稱..." onkeyup="applyFilters()">
-                            </div>
+                            <div class="col-4"><input type="text" id="filterName" class="form-control form-control-sm" placeholder="🔍 名稱..." onkeyup="applyFilters()"></div>
                             <div class="col-4">
                                 <select id="filterStatus" class="form-select form-select-sm" onchange="applyFilters()">
                                     <option value="all">所有狀態</option>
@@ -75,52 +55,21 @@
                                     <option value="damaged">已損壞</option>
                                 </select>
                             </div>
-                            <div class="col-4">
-                                <input type="text" id="filterBorrower" class="form-control form-control-sm" placeholder="👤 搜尋借出人..." onkeyup="applyFilters()">
-                            </div>
+                            <div class="col-4"><input type="text" id="filterBorrower" class="form-control form-control-sm" placeholder="👤 借出人..." onkeyup="applyFilters()"></div>
                         </div>
                     </div>
-
                     <div class="card-body p-0">
-                        <table class="table table-hover align-middle text-center mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>工具名稱</th>
-                                    <th>狀態</th>
-                                    <th>借出人</th>
-                                </tr>
-                            </thead>
-                            <tbody id="allToolsTableBody">
-                                <!-- JS 動態載入 -->
-                            </tbody>
-                        </table>
+                        <table class="table table-hover align-middle text-center mb-0"><thead class="table-light"><tr><th>序號</th><th>工具名稱</th><th>狀態</th><th>借出人</th></tr></thead><tbody id="allToolsTableBody"></tbody></table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 共用訊息提示 Modal -->
-    <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header" id="messageModalHeader">
-                    <h5 class="modal-title" id="messageModalTitle">提示</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <p id="messageModalBody" class="mb-0 fs-6"></p>
-                </div>
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">確定</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- 💡 共用訊息 Modal -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content"><div class="modal-header" id="messageModalHeader"><h5 class="modal-title" id="messageModalTitle">提示</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><p id="messageModalBody" class="mb-0 fs-6"></p></div><div class="modal-footer justify-content-center"><button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">確定</button></div></div></div></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 💡 新增：確認借用專用 Modal -->
+    <!-- 💡 確認借用專用 Modal (含圖片預覽) -->
     <div class="modal fade" id="confirmBorrowModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content">
@@ -130,7 +79,9 @@
                 </div>
                 <div class="modal-body text-center py-4">
                     <p class="mb-2 fs-5">您要申請借用</p>
-                    <h4 id="confirmBorrowToolName" class="text-primary fw-bold mb-0"></h4>
+                    <h4 id="confirmBorrowToolName" class="text-primary fw-bold mb-3"></h4>
+                    <!-- 預覽圖片的地方 -->
+                    <img id="confirmBorrowToolImage" src="" alt="工具照片" class="img-fluid rounded shadow-sm d-none mb-3" style="max-height: 220px; object-fit: cover;">
                 </div>
                 <div class="modal-footer justify-content-center">
                     <button type="button" class="btn btn-secondary w-25" data-bs-dismiss="modal">取消</button>
@@ -139,28 +90,22 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        // --- 身分驗證 ---
         const currentUser = localStorage.getItem('currentUser');
         const currentRole = localStorage.getItem('currentRole');
         
-        if (!currentUser) {
-            alert('系統阻擋：請先登入！');
-            window.location.href = 'index.html';
-        }
+        if (!currentUser) { alert('系統阻擋：請先登入！'); window.location.href = 'index.html'; }
 
         document.getElementById('userGreeting').innerText = `哈囉，${currentUser}`;
         if (currentRole === 'admin' || currentRole === 'super_admin') {
             document.getElementById('adminBtn').classList.remove('d-none');
         }
 
-        function logout() {
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('currentRole');
-            window.location.href = 'index.html';
-        }
+        function logout() { localStorage.removeItem('currentUser'); localStorage.removeItem('currentRole'); window.location.href = 'index.html'; }
 
-        // --- 共用訊息 Modal ---
         let msgModalInstance;
         function showMessage(title, message, type = 'success') {
             document.getElementById('messageModalTitle').innerText = title;
@@ -172,28 +117,20 @@
             msgModalInstance.show();
         }
 
-        // ==========================================
-        //          資料儲存與載入邏輯
-        // ==========================================
         let availableToolsMap = {}; 
-        let allToolsData = []; // 💡 確保這個全域變數存在
+        let allToolsData = []; 
 
         function loadDashboard() {
-            fetch('./tools')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        allToolsData = data.data; // 🚨 關鍵！將伺服器資料存起來供篩選使用
-                        renderAvailableSearch(data.data);
-                        renderMyList(data.data);
-                        applyFilters(); // 載入時預設執行一次篩選渲染
-                    }
-                });
+            fetch('./tools').then(res => res.json()).then(data => {
+                if (data.success) {
+                    allToolsData = data.data; 
+                    renderAvailableSearch(data.data);
+                    renderMyList(data.data);
+                    applyFilters(); 
+                }
+            });
         }
 
-        // ==========================================
-        //          即時篩選與渲染邏輯
-        // ==========================================
         function applyFilters() {
             try {
                 const nameKeyword = (document.getElementById('filterName').value || '').trim().toLowerCase();
@@ -201,71 +138,43 @@
                 const borrowerKeyword = (document.getElementById('filterBorrower').value || '').trim().toLowerCase();
 
                 const filteredTools = allToolsData.filter(tool => {
-                    const toolName = (tool.name || '').toLowerCase();
-                    const toolBorrower = (tool.borrower || '').toLowerCase();
-                    const toolStatus = tool.status || '';
-
-                    const matchName = toolName.includes(nameKeyword);
-                    const matchStatus = (statusFilter === 'all') || (toolStatus === statusFilter);
-                    const matchBorrower = toolBorrower.includes(borrowerKeyword);
-                    
+                    const matchName = (tool.name || '').toLowerCase().includes(nameKeyword);
+                    const matchStatus = (statusFilter === 'all') || (tool.status === statusFilter);
+                    const matchBorrower = (tool.borrower || '').toLowerCase().includes(borrowerKeyword);
                     return matchName && matchStatus && matchBorrower;
                 });
-
                 renderAllToolsTable(filteredTools);
-            } catch (error) {
-                console.error("篩選錯誤：", error);
-            }
+            } catch (error) { console.error("篩選錯誤：", error); }
         }
 
         function renderAvailableSearch(tools) {
-            const datalist = document.getElementById('toolsDatalist');
-            datalist.innerHTML = '';
-            availableToolsMap = {}; 
-            
+            const datalist = document.getElementById('toolsDatalist'); datalist.innerHTML = ''; availableToolsMap = {}; 
             tools.forEach(tool => {
-                if (tool.status === 'available') {
-                    availableToolsMap[tool.name] = tool.id; 
-                    datalist.innerHTML += `<option value="${tool.name}">`;
-                }
+                if (tool.status === 'available') { availableToolsMap[tool.name] = tool.id; datalist.innerHTML += `<option value="${tool.name}">`; }
             });
         }
 
         function renderMyList(tools) {
-            const list = document.getElementById('myBorrowedList');
-            list.innerHTML = '';
-            let hasMyTools = false;
-
+            const list = document.getElementById('myBorrowedList'); list.innerHTML = ''; let hasMyTools = false;
             tools.forEach(tool => {
                 if ((tool.status === 'borrowed' || tool.status === 'pending_return') && tool.borrower === currentUser) {
                     hasMyTools = true;
-                    let actionHtml = tool.status === 'borrowed' 
-                        ? `<button class="btn btn-sm btn-outline-warning" onclick="returnTool(${tool.id}, '${tool.name}')">申請歸還</button>` 
-                        : `<span class="badge bg-info text-dark">歸還審核中</span>`;
-
-                    list.innerHTML += `
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${tool.name} ${actionHtml}
-                        </li>`;
+                    let actionHtml = tool.status === 'borrowed' ? `<button class="btn btn-sm btn-outline-warning" onclick="returnTool(${tool.id}, '${tool.name}')">申請歸還</button>` : `<span class="badge bg-info text-dark">歸還審核中</span>`;
+                    list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">${tool.name} ${actionHtml}</li>`;
                 }
             });
-
             if (!hasMyTools) list.innerHTML = '<li class="list-group-item text-muted text-center p-3">您目前沒有借出或申請中的工具</li>';
         }
 
         function renderAllToolsTable(tools) {
-            const tbody = document.getElementById('allToolsTableBody');
-            tbody.innerHTML = '';
-            
+            const tbody = document.getElementById('allToolsTableBody'); tbody.innerHTML = '';
             tools.forEach((tool, index) => {
-                let statusBadge = '';
-                let nameDisplay = tool.name; // 預設只顯示文字
-
+                let statusBadge = ''; let nameDisplay = tool.name; 
                 switch(tool.status) {
                     case 'available': 
                         statusBadge = '<span class="badge bg-success">可借用</span>'; 
-                        // 🔥 如果可借用，把名稱變成一顆漂亮的借用按鈕！
-                        nameDisplay = `<button class="btn btn-sm btn-outline-primary fw-bold w-100 shadow-sm" onclick="openConfirmBorrowModal(${tool.id}, '${tool.name}')">${tool.name}</button>`;
+                        // 💡 點擊純名稱按鈕觸發 Modal (只傳遞 ID)
+                        nameDisplay = `<button class="btn btn-sm btn-outline-primary fw-bold w-100 shadow-sm" onclick="openConfirmBorrowModal(${tool.id})">${tool.name}</button>`;
                         break;
                     case 'borrowed': statusBadge = '<span class="badge bg-secondary">已借出</span>'; break;
                     case 'pending_borrow': statusBadge = '<span class="badge bg-warning text-dark">借出審核中</span>'; break;
@@ -274,17 +183,10 @@
                     case 'damaged': statusBadge = '<span class="badge bg-dark">已損壞</span>'; break;
                     default: statusBadge = `<span class="badge bg-light text-dark">${tool.status}</span>`;
                 }
-                
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <!-- 🔥 這裡改印出 nameDisplay -->
-                        <td class="align-middle">${nameDisplay}</td>
-                        <td class="align-middle">${statusBadge}</td>
-                        <td class="align-middle">${tool.borrower || '-'}</td>
-                    </tr>`;
+                tbody.innerHTML += `<tr><td>${index + 1}</td><td class="align-middle">${nameDisplay}</td><td class="align-middle">${statusBadge}</td><td class="align-middle">${tool.borrower || '-'}</td></tr>`;
             });
         }
+
         // ==========================================
         //          彈窗與直接借用邏輯
         // ==========================================
@@ -292,49 +194,48 @@
         let selectedToolId = null;
         let selectedToolName = '';
 
-        // 1. 打開確認彈窗
-        function openConfirmBorrowModal(id, name) {
-            selectedToolId = id;
-            selectedToolName = name;
-            document.getElementById('confirmBorrowToolName').innerText = name;
+        // 💡 根據傳入的 ID，動態載入工具名稱與照片
+        function openConfirmBorrowModal(id) {
+            const tool = allToolsData.find(t => t.id === id);
+            if (!tool) return;
+
+            selectedToolId = tool.id;
+            selectedToolName = tool.name;
+            document.getElementById('confirmBorrowToolName').innerText = tool.name;
             
-            if (!confirmBorrowModalInstance) {
-                confirmBorrowModalInstance = new bootstrap.Modal(document.getElementById('confirmBorrowModal'));
+            // 處理照片顯示
+            const imgElement = document.getElementById('confirmBorrowToolImage');
+            if (tool.image) {
+                imgElement.src = tool.image;
+                imgElement.classList.remove('d-none');
+            } else {
+                imgElement.src = '';
+                imgElement.classList.add('d-none');
             }
+            
+            if (!confirmBorrowModalInstance) confirmBorrowModalInstance = new bootstrap.Modal(document.getElementById('confirmBorrowModal'));
             confirmBorrowModalInstance.show();
         }
 
-        // 2. 執行借用並防止連點
         function executeBorrow() {
             const btn = document.getElementById('confirmBorrowBtn');
-            btn.disabled = true; // 🔒 鎖定按鈕，防止使用者狂點兩下
-            btn.innerText = '處理中...';
+            btn.disabled = true; btn.innerText = '處理中...'; // 防連點鎖定
 
             fetch('./borrow', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ toolId: selectedToolId, toolName: selectedToolName, userName: currentUser })
             }).then(res => res.json()).then(data => {
-                confirmBorrowModalInstance.hide(); // 關閉彈窗
-                btn.disabled = false; // 🔓 解鎖按鈕
-                btn.innerText = '確認送出';
-
-                if (data.success) {
-                    showMessage('申請成功', data.message, 'success');
-                    loadDashboard(); // 重新載入表格，按鈕會瞬間變成黃色的「審核中」
-                } else {
-                    showMessage('申請失敗', data.message, 'danger');
-                }
+                confirmBorrowModalInstance.hide(); 
+                btn.disabled = false; btn.innerText = '確認送出';
+                if (data.success) { showMessage('申請成功', data.message, 'success'); loadDashboard(); } 
+                else { showMessage('申請失敗', data.message, 'danger'); }
             }).catch(() => {
-                btn.disabled = false;
-                btn.innerText = '確認送出';
+                btn.disabled = false; btn.innerText = '確認送出';
                 showMessage('連線錯誤', '無法連線到伺服器！', 'danger');
             });
         }
 
-        // ==========================================
-        //          借出與歸還操作邏輯
-        // ==========================================
         function borrowTool() {
             const searchInput = document.getElementById('toolSearchInput');
             const toolName = searchInput.value.trim();
@@ -348,32 +249,19 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ toolId, toolName, userName: currentUser })
             }).then(res => res.json()).then(data => {
-                if (data.success) {
-                    searchInput.value = ''; 
-                    showMessage('申請成功', data.message, 'success');
-                    loadDashboard(); 
-                } else {
-                    showMessage('申請失敗', data.message, 'danger');
-                }
+                if (data.success) { searchInput.value = ''; showMessage('申請成功', data.message, 'success'); loadDashboard(); } 
+                else { showMessage('申請失敗', data.message, 'danger'); }
             });
         }
 
         function returnTool(toolId, toolName) {
-            fetch('./return', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ toolId, toolName, userName: currentUser })
-            }).then(res => res.json()).then(data => {
-                if (data.success) {
-                    showMessage('申請成功', data.message, 'success');
-                    loadDashboard(); 
-                } else {
-                    showMessage('申請失敗', data.message, 'danger');
-                }
+            fetch('./return', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toolId, toolName, userName: currentUser }) })
+            .then(res => res.json()).then(data => {
+                if (data.success) { showMessage('申請成功', data.message, 'success'); loadDashboard(); } 
+                else { showMessage('申請失敗', data.message, 'danger'); }
             });
         }
 
-        // 啟動時載入資料
         loadDashboard();
     </script>
 </body>
