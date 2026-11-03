@@ -150,7 +150,11 @@
         function renderAvailableSearch(tools) {
             const datalist = document.getElementById('toolsDatalist'); datalist.innerHTML = ''; availableToolsMap = {}; 
             tools.forEach(tool => {
-                if (tool.status === 'available') { availableToolsMap[tool.name] = tool.id; datalist.innerHTML += `<option value="${tool.name}">`; }
+                if (tool.status === 'available') { 
+                    // 💡 加入 .trim()，就算名稱有空白也能順利配對
+                    availableToolsMap[tool.name.trim()] = tool.id; 
+                    datalist.innerHTML += `<option value="${tool.name.trim()}">`; 
+                }
             });
         }
 
