@@ -232,7 +232,12 @@
             }).then(res => res.json()).then(data => {
                 confirmBorrowModalInstance.hide(); 
                 btn.disabled = false; btn.innerText = '確認送出';
-                if (data.success) { showMessage('申請成功', data.message, 'success'); loadDashboard(); } 
+                if (data.success) { 
+                    showMessage('申請成功', data.message, 'success'); 
+                    // 🌟 新增這行：借用成功後，自動清空左邊的搜尋輸入框
+                    document.getElementById('toolSearchInput').value = ''; 
+                    loadDashboard(); 
+                } 
                 else { showMessage('申請失敗', data.message, 'danger'); }
             }).catch(() => {
                 btn.disabled = false; btn.innerText = '確認送出';
@@ -248,14 +253,8 @@
             if (!toolName) return showMessage('請注意', '請輸入或選擇一項工具！', 'warning');
             if (!toolId) return showMessage('錯誤', '找不到此工具或已被借走，請從選單中挑選！', 'danger');
 
-            fetch('./borrow', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ toolId, toolName, userName: currentUser })
-            }).then(res => res.json()).then(data => {
-                if (data.success) { searchInput.value = ''; showMessage('申請成功', data.message, 'success'); loadDashboard(); } 
-                else { showMessage('申請失敗', data.message, 'danger'); }
-            });
+            // 🌟 關鍵修改：不再直接發送 fetch，而是呼叫已經寫好的彈窗函數！
+            openConfirmBorrowModal(toolId);
         }
 
         function returnTool(toolId, toolName) {
